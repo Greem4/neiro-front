@@ -1,0 +1,11 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neiro-calendar-frontend
+    ports:
+      - "3001:80"
+    env_file:
+      - .env
+    restart: unless-stopped
