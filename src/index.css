@@ -7,7 +7,6 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
 }
 
 .calendar-container {
@@ -70,7 +69,7 @@ h1 {
   color: green; /* цвет посещённых */
 }
 
-.btn-group {
+.custom-btn-group {
   display: inline-flex;
   gap: 0.5rem;
   margin-left: 0.5rem;
@@ -127,5 +126,20 @@ h1 {
 
   .add-form input {
     width: 60px;
+  }
+}
+/* Примерные стили (при желании можно расширять): */
+
+/* Чтобы на телефоне ячейки таблицы не разъезжались, уже есть .table-responsive, но если нужно: */
+.table td,
+.table th {
+  vertical-align: top;
+}
+
+/* Уменьшаем высоту строк на мобильных (Bootstrap уже делает часть работы), но можно подстраховаться: */
+@media (max-width: 576px) {
+  .table th,
+  .table td {
+    padding: 0.3rem;
   }
 }
