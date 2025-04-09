@@ -1,0 +1,9 @@
+services:
+  frontend:
+    image: greem4/neiro-front-frontend
+    container_name: neiro-calendar-frontend
+    ports:
+      - "3001:80"
+    env_file:
+      - .env
+    restart: unless-stopped

@@ -184,7 +184,7 @@ function CalendarPage() {
                                                         {cell.records.map((record) => (
                                                             <li key={record.id} className="mb-2">
                                                                 <div className="d-flex align-items-center justify-content-between">
-                                    <span className={record.attended ? 'fw-bold text-success' : ''}>
+                                    <span className={!record.attended ? 'fw-bold text-success' : ''}>
                                       {record.personName}
                                     </span>
 
@@ -192,20 +192,20 @@ function CalendarPage() {
                                                                         {record.attended ? (
                                                                             <button
                                                                                 type="button"
-                                                                                className="btn btn-sm btn-outline-danger"
+                                                                                className="btn btn-sm btn-outline-success"
                                                                                 onClick={() => setNotAttended(record.id)}
                                                                                 title="Отметить как не был"
                                                                             >
-                                                                                <X size={16} />
+                                                                                <Check size={16} />
                                                                             </button>
                                                                         ) : (
                                                                             <button
                                                                                 type="button"
-                                                                                className="btn btn-sm btn-outline-success"
+                                                                                className="btn btn-sm btn-outline-danger"
                                                                                 onClick={() => setAttended(record.id)}
                                                                                 title="Отметить как был"
                                                                             >
-                                                                                <Check size={16} />
+                                                                                <X size={16} />
                                                                             </button>
                                                                         )}
 
