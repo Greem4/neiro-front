@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Check, X, Trash2 } from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {Check, X, Trash2} from 'lucide-react';
 
 const RUS_WEEKDAYS = ['Вт', 'Чт', 'Пт', 'Вс'];
 const dayOrder = [2, 4, 5, 0];
@@ -17,7 +17,7 @@ function CalendarPage() {
 
     // Состояния для всплывающего окна (tooltip) со сводкой по дню
     const [tooltipVisible, setTooltipVisible] = useState(false);
-    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [tooltipPosition, setTooltipPosition] = useState({x: 0, y: 0});
     const [dailySummary, setDailySummary] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
 
@@ -58,7 +58,7 @@ function CalendarPage() {
             if (data && data.length > 0) {
                 setDailySummary(data[0]);
             } else {
-                setDailySummary({ attendedCount: 0, earnings: 0 });
+                setDailySummary({attendedCount: 0, earnings: 0});
             }
             setTooltipVisible(true);
         } catch (error) {
@@ -74,7 +74,10 @@ function CalendarPage() {
         try {
             const formData = new FormData();
             formData.append('recordId', recordId);
-            await fetch('/api/v1/calendar/check', { method: 'POST', body: formData });
+            await fetch('/api/v1/calendar/check', {
+                method: 'POST',
+                body: formData
+            });
             await fetchCalendarData();
         } catch (error) {
             console.error('Ошибка:', error);
@@ -85,7 +88,10 @@ function CalendarPage() {
         try {
             const formData = new FormData();
             formData.append('recordId', recordId);
-            await fetch('/api/v1/calendar/uncheck', { method: 'POST', body: formData });
+            await fetch('/api/v1/calendar/uncheck', {
+                method: 'POST',
+                body: formData
+            });
             await fetchCalendarData();
         } catch (error) {
             console.error('Ошибка:', error);
@@ -166,10 +172,12 @@ function CalendarPage() {
             <div className="py-3">
                 <h1 className="text-center mb-3">Календарь занятий</h1>
 
-                <form onSubmit={handleMonthYearSubmit} className="d-flex flex-wrap gap-2 justify-content-center mb-3">
+                <form onSubmit={handleMonthYearSubmit}
+                      className="d-flex flex-wrap gap-2 justify-content-center mb-3">
                     <div>
                         <label className="form-label mb-1">Месяц:</label>
-                        <select className="form-select" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+                        <select className="form-select" value={month}
+                                onChange={(e) => setMonth(Number(e.target.value))}>
                             {monthOptions}
                         </select>
                     </div>
@@ -200,7 +208,8 @@ function CalendarPage() {
                 </div>
 
                 <div className="table-responsive px-2">
-                    <table className="table table-bordered align-middle text-center mb-3">
+                    <table
+                        className="table table-bordered align-middle text-center mb-3">
                         <thead className="table-secondary">
                         <tr>
                             {RUS_WEEKDAYS.map((day) => (
@@ -220,29 +229,39 @@ function CalendarPage() {
                                     {dayOrder.map((dow) => {
                                         const cell = dayMap[dow];
                                         if (!cell || !cell.inCurrentMonth) {
-                                            return <td key={dow} />;
+                                            return <td key={dow}/>;
                                         }
                                         const tdClass = cell.inCurrentMonth ? '' : 'bg-light';
 
                                         return (
-                                            <td key={dow} className={tdClass} style={{ minWidth: '120px', verticalAlign: 'top' }}>
-                                                <div className="d-flex flex-column p-1" style={{ minHeight: '150px' }}>
+                                            <td key={dow} className={tdClass}
+                                                style={{
+                                                    minWidth: '120px',
+                                                    verticalAlign: 'top'
+                                                }}>
+                                                <div
+                                                    className="d-flex flex-column p-1"
+                                                    style={{minHeight: '150px'}}>
                                                     {/* При клике на номер дня запускаем функцию с event для получения координат */}
                                                     <div
                                                         className="fw-bold mb-2"
-                                                        style={{ cursor: 'pointer' }}
+                                                        style={{cursor: 'pointer'}}
                                                         onClick={(e) => openSummaryTooltip(e, cell.date)}
                                                     >
                                                         {new Date(cell.date).getDate()}
                                                     </div>
                                                     <ul className="list-unstyled flex-grow-1">
                                                         {cell.records.map((record) => (
-                                                            <li key={record.id} className="mb-2">
-                                                                <div className="d-flex align-items-center justify-content-between">
-                                    <span className={record.attended ? 'fw-bold text-success' : ''}>
+                                                            <li key={record.id}
+                                                                className="mb-2">
+                                                                <div
+                                                                    className="d-flex align-items-center justify-content-between">
+                                    <span
+                                        className={record.attended ? 'fw-bold text-success' : ''}>
                                       {record.personName}
                                     </span>
-                                                                    <div className="d-flex gap-1">
+                                                                    <div
+                                                                        className="d-flex gap-1">
                                                                         {record.attended ? (
                                                                             <button
                                                                                 type="button"
@@ -250,7 +269,8 @@ function CalendarPage() {
                                                                                 onClick={() => setNotAttended(record.id)}
                                                                                 title="Отметить как не был"
                                                                             >
-                                                                                <Check size={16} />
+                                                                                <Check
+                                                                                    size={16}/>
                                                                             </button>
                                                                         ) : (
                                                                             <button
@@ -259,7 +279,7 @@ function CalendarPage() {
                                                                                 onClick={() => setAttended(record.id)}
                                                                                 title="Отметить как был"
                                                                             >
-                                                                                <X size={16} />
+                                                                                <X size={16}/>
                                                                             </button>
                                                                         )}
                                                                         <button
@@ -268,14 +288,17 @@ function CalendarPage() {
                                                                             onClick={() => deleteRecord(record.id)}
                                                                             title="Удалить запись"
                                                                         >
-                                                                            <Trash2 size={16} />
+                                                                            <Trash2
+                                                                                size={16}/>
                                                                         </button>
                                                                     </div>
                                                                 </div>
                                                             </li>
                                                         ))}
                                                     </ul>
-                                                    <form onSubmit={(e) => addAttendance(e, cell.date)} className="mt-auto d-flex">
+                                                    <form
+                                                        onSubmit={(e) => addAttendance(e, cell.date)}
+                                                        className="mt-auto d-flex">
                                                         <input
                                                             type="text"
                                                             name="personName"
@@ -283,7 +306,8 @@ function CalendarPage() {
                                                             placeholder="Имя"
                                                             required
                                                         />
-                                                        <button type="submit" className="btn btn-sm btn-outline-primary">
+                                                        <button type="submit"
+                                                                className="btn btn-sm btn-outline-primary">
                                                             +
                                                         </button>
                                                     </form>
@@ -298,7 +322,7 @@ function CalendarPage() {
                     </table>
                 </div>
 
-                <hr className="mx-2" />
+                <hr className="mx-2"/>
 
                 <div className="text-center">
                     <p className="fs-5 mb-1">
@@ -311,18 +335,22 @@ function CalendarPage() {
             </div>
 
             {/* Фоновый слой для закрытия tooltip при клике вне */}
-            {tooltipVisible && <div style={backdropStyle} onClick={closeTooltip} />}
+            {tooltipVisible &&
+                <div style={backdropStyle} onClick={closeTooltip}/>}
 
             {/* Всплывающее окно (tooltip) со сводкой по дню */}
             {tooltipVisible && (
                 <div style={tooltipStyle} onClick={(e) => e.stopPropagation()}>
-                    <h5 style={{ marginBottom: '8px' }}>
+                    <h5 style={{marginBottom: '8px'}}>
                         Сводка за {new Date(selectedDate).toLocaleDateString()}
                     </h5>
                     {dailySummary ? (
                         <>
                             <p style={{ margin: '4px 0' }}>
-                                Пришли: <strong>{dailySummary.attendedCount}</strong> из <strong>{dailySummary.totalCount}</strong>
+                                Записей: <strong>{dailySummary.totalCount}</strong>
+                            </p>
+                            <p style={{ margin: '4px 0' }}>
+                                Пришли: <strong>{dailySummary.attendedCount}</strong>
                             </p>
                             <p style={{ margin: '4px 0' }}>
                                 Заработано: <strong>{dailySummary.earnings}</strong> руб.
@@ -331,7 +359,8 @@ function CalendarPage() {
                     ) : (
                         <p>Нет данных</p>
                     )}
-                    <button className="btn btn-secondary btn-sm mt-2" onClick={closeTooltip}>
+                    <button className="btn btn-secondary btn-sm mt-2"
+                            onClick={closeTooltip}>
                         Закрыть
                     </button>
                 </div>
