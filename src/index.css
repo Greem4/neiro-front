@@ -1,145 +1,40 @@
-/**
- * Помещаем этот файл в `src/index.css`.
- * Пример простых стилей. Для более продвинутой адаптации под мобилки
- * добавьте медиа-запросы или используйте flex/grid верстку.
- */
+/* src/index.css */
 
-body {
+/* Обнуление базовых отступов */
+html, body {
   margin: 0;
   padding: 0;
+  background-color: #f8f9fa; /* Светлый фон */
 }
 
-.calendar-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-h1 {
-  text-align: center;
-}
-
-.form-switch {
+.app-container {
+  min-height: 100vh;
   display: flex;
-  gap: 1rem;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
+  flex-direction: column;
 }
 
-.calendar-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
+/* Календарная страница занимает всё пространство */
+.calendar-page {
+  flex: 1;
 }
 
-.calendar-table th,
-.calendar-table td {
-  border: 1px solid #ccc;
-  text-align: left;
-  vertical-align: top;
-  padding: 0.5rem;
-  min-width: 100px; /* чтобы клетки не сужались слишком сильно */
-}
-
-.outside {
-  background-color: #f0f0f0;
-}
-
-.current-month {
-  background-color: #fff;
-}
-
-.day-number {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.records {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.records li {
-  margin-bottom: 0.25rem;
-}
-
-.attended {
-  color: green; /* цвет посещённых */
-}
-
-.custom-btn-group {
-  display: inline-flex;
-  gap: 0.5rem;
-  margin-left: 0.5rem;
-}
-
-.toggle-btn,
-.delete-btn,
-.add-btn {
-  cursor: pointer;
-}
-
-.toggle-btn {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  font-size: 0.8rem;
-}
-
-.delete-btn {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  font-size: 0.8rem;
-}
-
-.add-form {
-  margin-top: 0.5rem;
-}
-
-.add-form input {
-  margin-right: 0.5rem;
-  padding: 0.25rem;
-  font-size: 0.8rem;
-  width: 70px; /* под мобилку можно побольше */
-}
-
-.add-btn {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  font-size: 0.8rem;
-}
-
-.summary {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-/* Пример простых медиа-запросов под узкий экран */
-@media (max-width: 600px) {
-  .calendar-table th,
-  .calendar-table td {
-    font-size: 0.8rem;
-    min-width: auto;
-    padding: 0.3rem;
-  }
-
-  .add-form input {
-    width: 60px;
-  }
-}
-/* Примерные стили (при желании можно расширять): */
-
-/* Чтобы на телефоне ячейки таблицы не разъезжались, уже есть .table-responsive, но если нужно: */
-.table td,
-.table th {
-  vertical-align: top;
-}
-
-/* Уменьшаем высоту строк на мобильных (Bootstrap уже делает часть работы), но можно подстраховаться: */
+/* При маленьком экране уменьшаем размер ячеек и шрифт */
 @media (max-width: 576px) {
   .table th,
   .table td {
-    padding: 0.3rem;
+    padding: 0.4rem;
+    font-size: 0.85rem;
   }
+  .table td {
+    min-width: auto;
+  }
+  .form-select.form-select-sm,
+  .form-control.form-control-sm {
+    font-size: 0.85rem;
+  }
+}
+
+/* Подчеркивание кнопки в navbar при наведении (просто для наглядности) */
+.navbar-nav .nav-link:hover {
+  text-decoration: underline;
 }

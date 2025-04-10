@@ -1,14 +1,10 @@
-/**
- * Помещаем этот файл в `src/main.jsx`.
- * Точка входа приложения, где мы "включаем" React.
- */
+// src/main.jsx
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'  // Импортируем главный компонент приложения
-import './index.css'         // Можно подключать общие стили
-import 'bootstrap/dist/css/bootstrap.min.css';
-
+import App from './App.jsx'
+import './index.css'
+import 'bootstrap/dist/css/bootstrap.min.css' // Подключаем стили Bootstrap
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
