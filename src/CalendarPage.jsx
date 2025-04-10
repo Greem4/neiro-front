@@ -322,7 +322,7 @@ function CalendarPage() {
                     {dailySummary ? (
                         <>
                             <p style={{ margin: '4px 0' }}>
-                                Занятий: <strong>{dailySummary.attendedCount}</strong>
+                                Пришли: <strong>{dailySummary.attendedCount}</strong> из <strong>{dailySummary.totalCount}</strong>
                             </p>
                             <p style={{ margin: '4px 0' }}>
                                 Заработано: <strong>{dailySummary.earnings}</strong> руб.
