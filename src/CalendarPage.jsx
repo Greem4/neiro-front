@@ -184,7 +184,7 @@ function CalendarPage() {
                                                         {cell.records.map((record) => (
                                                             <li key={record.id} className="mb-2">
                                                                 <div className="d-flex align-items-center justify-content-between">
-                                    <span className={!record.attended ? 'fw-bold text-success' : ''}>
+                                    <span className={record.attended ? 'fw-bold text-success' : ''}>
                                       {record.personName}
                                     </span>
 
