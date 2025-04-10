@@ -15,6 +15,12 @@ function CalendarPage() {
     const [attendedCount, setAttendedCount] = useState(0);
     const [totalCost, setTotalCost] = useState(0);
 
+    // Состояния для всплывающего окна (tooltip) со сводкой по дню
+    const [tooltipVisible, setTooltipVisible] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [dailySummary, setDailySummary] = useState(null);
+    const [selectedDate, setSelectedDate] = useState('');
+
     useEffect(() => {
         fetchCalendarData();
     }, [month, year]);
@@ -32,6 +38,36 @@ function CalendarPage() {
         } catch (error) {
             console.error('Ошибка:', error);
         }
+    };
+
+    // Функция получения сводки по выбранной дате и отображения tooltip
+    const openSummaryTooltip = async (event, date) => {
+        event.stopPropagation();
+        setSelectedDate(date);
+        // Получаем координаты клика и корректируем их для смещения tooltip
+        const rect = event.target.getBoundingClientRect();
+        setTooltipPosition({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height + 5, // с небольшим смещением вниз
+        });
+        const formattedDate = new Date(date).toISOString().split('T')[0];
+        try {
+            const response = await fetch(`/api/v1/calendar/daily-summary?start=${formattedDate}&end=${formattedDate}`);
+            if (!response.ok) throw new Error('Ошибка при получении данных сводки');
+            const data = await response.json();
+            if (data && data.length > 0) {
+                setDailySummary(data[0]);
+            } else {
+                setDailySummary({ attendedCount: 0, earnings: 0 });
+            }
+            setTooltipVisible(true);
+        } catch (error) {
+            console.error('Ошибка при получении сводки для даты', date, error);
+        }
+    };
+
+    const closeTooltip = () => {
+        setTooltipVisible(false);
     };
 
     const setAttended = async (recordId) => {
@@ -100,22 +136,40 @@ function CalendarPage() {
         </option>
     ));
 
+    // Стили для tooltip (всплывающее окно)
+    const tooltipStyle = {
+        position: 'fixed',
+        top: tooltipPosition.y,
+        left: tooltipPosition.x,
+        transform: 'translate(-50%, 0)',
+        backgroundColor: '#fff',
+        border: '1px solid #ddd',
+        borderRadius: '8px',
+        padding: '10px 15px',
+        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+        zIndex: 1000,
+        minWidth: '180px',
+    };
+
+    // Фоновый полупрозрачный слой, который закрывает tooltip при клике вне него
+    const backdropStyle = {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 900,
+    };
+
     return (
-        <div className="container-fluid px-0">
+        <div className="container-fluid px-0" onClick={closeTooltip}>
             <div className="py-3">
                 <h1 className="text-center mb-3">Календарь занятий</h1>
 
-                <form
-                    onSubmit={handleMonthYearSubmit}
-                    className="d-flex flex-wrap gap-2 justify-content-center mb-3"
-                >
+                <form onSubmit={handleMonthYearSubmit} className="d-flex flex-wrap gap-2 justify-content-center mb-3">
                     <div>
                         <label className="form-label mb-1">Месяц:</label>
-                        <select
-                            className="form-select"
-                            value={month}
-                            onChange={(e) => setMonth(Number(e.target.value))}
-                        >
+                        <select className="form-select" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
                             {monthOptions}
                         </select>
                     </div>
@@ -161,7 +215,6 @@ function CalendarPage() {
                                 const jsDay = new Date(cell.date).getDay();
                                 dayMap[jsDay] = cell;
                             });
-
                             return (
                                 <tr key={weekIndex}>
                                     {dayOrder.map((dow) => {
@@ -169,17 +222,19 @@ function CalendarPage() {
                                         if (!cell || !cell.inCurrentMonth) {
                                             return <td key={dow} />;
                                         }
-
-                                        const isOutside = !cell.inCurrentMonth;
-                                        const tdClass = isOutside ? 'bg-light' : '';
+                                        const tdClass = cell.inCurrentMonth ? '' : 'bg-light';
 
                                         return (
                                             <td key={dow} className={tdClass} style={{ minWidth: '120px', verticalAlign: 'top' }}>
                                                 <div className="d-flex flex-column p-1" style={{ minHeight: '150px' }}>
-                                                    <div className="fw-bold mb-2">
+                                                    {/* При клике на номер дня запускаем функцию с event для получения координат */}
+                                                    <div
+                                                        className="fw-bold mb-2"
+                                                        style={{ cursor: 'pointer' }}
+                                                        onClick={(e) => openSummaryTooltip(e, cell.date)}
+                                                    >
                                                         {new Date(cell.date).getDate()}
                                                     </div>
-
                                                     <ul className="list-unstyled flex-grow-1">
                                                         {cell.records.map((record) => (
                                                             <li key={record.id} className="mb-2">
@@ -187,7 +242,6 @@ function CalendarPage() {
                                     <span className={record.attended ? 'fw-bold text-success' : ''}>
                                       {record.personName}
                                     </span>
-
                                                                     <div className="d-flex gap-1">
                                                                         {record.attended ? (
                                                                             <button
@@ -208,7 +262,6 @@ function CalendarPage() {
                                                                                 <X size={16} />
                                                                             </button>
                                                                         )}
-
                                                                         <button
                                                                             type="button"
                                                                             className="btn btn-sm btn-outline-secondary"
@@ -222,7 +275,6 @@ function CalendarPage() {
                                                             </li>
                                                         ))}
                                                     </ul>
-
                                                     <form onSubmit={(e) => addAttendance(e, cell.date)} className="mt-auto d-flex">
                                                         <input
                                                             type="text"
@@ -257,6 +309,33 @@ function CalendarPage() {
                     </p>
                 </div>
             </div>
+
+            {/* Фоновый слой для закрытия tooltip при клике вне */}
+            {tooltipVisible && <div style={backdropStyle} onClick={closeTooltip} />}
+
+            {/* Всплывающее окно (tooltip) со сводкой по дню */}
+            {tooltipVisible && (
+                <div style={tooltipStyle} onClick={(e) => e.stopPropagation()}>
+                    <h5 style={{ marginBottom: '8px' }}>
+                        Сводка за {new Date(selectedDate).toLocaleDateString()}
+                    </h5>
+                    {dailySummary ? (
+                        <>
+                            <p style={{ margin: '4px 0' }}>
+                                Занятий: <strong>{dailySummary.attendedCount}</strong>
+                            </p>
+                            <p style={{ margin: '4px 0' }}>
+                                Заработано: <strong>{dailySummary.earnings}</strong> руб.
+                            </p>
+                        </>
+                    ) : (
+                        <p>Нет данных</p>
+                    )}
+                    <button className="btn btn-secondary btn-sm mt-2" onClick={closeTooltip}>
+                        Закрыть
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
