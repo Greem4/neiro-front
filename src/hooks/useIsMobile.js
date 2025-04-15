@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Хук для определения, является ли устройство "мобильным"
- * (например, ширина экрана < 576px).
+ * Возвращает true, если ширина экрана < 576px (Bootstrap breakpoint 'sm').
  */
 export default function useIsMobile() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 576);

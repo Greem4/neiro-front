@@ -1,26 +1,25 @@
-/* Убрали max-width, центрирование и отступы для #root */
+/* Убираем max-width/отступы, чтобы использовать всю ширину экрана */
 #root {
   margin: 0;
   padding: 0;
   text-align: left;
 }
 
-/* Фон и обнуление отступов */
-html,
-body {
+/* Общий фон и обнуление отступов */
+html, body {
   margin: 0;
   padding: 0;
-  background-color: #f8f9fa; /* Светлый фон */
+  background-color: #f8f9fa;
 }
 
-/* Календарная страница занимает всю высоту */
+/* Календарная страница на всю высоту */
 .calendar-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* При маленьком экране уменьшаем размер ячеек и шрифт */
+/* На маленьких экранах уменьшаем размеры ячеек и шрифты */
 @media (max-width: 576px) {
   .table th,
   .table td {
