@@ -1,40 +1,33 @@
-/* src/index.css */
+/* Убираем max-width/отступы, чтобы использовать всю ширину экрана */
+#root {
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
 
-/* Обнуление базовых отступов */
+/* Общий фон и обнуление отступов */
 html, body {
   margin: 0;
   padding: 0;
-  background-color: #f8f9fa; /* Светлый фон */
+  background-color: #f8f9fa;
 }
 
-.app-container {
+/* Календарная страница на всю высоту */
+.calendar-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Календарная страница занимает всё пространство */
-.calendar-page {
-  flex: 1;
-}
-
-/* При маленьком экране уменьшаем размер ячеек и шрифт */
+/* На маленьких экранах уменьшаем размеры ячеек и шрифты */
 @media (max-width: 576px) {
   .table th,
   .table td {
     padding: 0.4rem;
     font-size: 0.85rem;
   }
-  .table td {
-    min-width: auto;
-  }
   .form-select.form-select-sm,
   .form-control.form-control-sm {
     font-size: 0.85rem;
   }
-}
-
-/* Подчеркивание кнопки в navbar при наведении (просто для наглядности) */
-.navbar-nav .nav-link:hover {
-  text-decoration: underline;
 }
