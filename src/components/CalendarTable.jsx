@@ -1,14 +1,15 @@
 import React from 'react';
 import { Check, X, Trash2 } from 'lucide-react';
 
+// Русские будни и соответствующие дни недели
 const RUS_WEEKDAYS = ['Вт', 'Чт', 'Пт', 'Вс'];
-// Соответствующие числовые коды дней (JS): вторник=2, четверг=4, пятница=5, воскресенье=0
+// Числовые коды (JS): вторник=2, четверг=4, пятница=5, воскресенье=0
 const dayOrder = [2, 4, 5, 0];
 
-// Для мобильной вёрстки делим на пары (2 столбца)
+// Для мобильного режима — пары (2 колонки)
 const mobilePairs = [
-    [dayOrder[0], dayOrder[1]], // [2, 4]
-    [dayOrder[2], dayOrder[3]]  // [5, 0]
+    [dayOrder[0], dayOrder[1]], // [2,4]
+    [dayOrder[2], dayOrder[3]]  // [5,0]
 ];
 
 function CalendarTable({
@@ -20,19 +21,17 @@ function CalendarTable({
                            openSummaryTooltip,
                            mobileView
                        }) {
-    // Общая функция для отрисовки ячейки дня
+    // Рендер ячейки дня
     const renderDayCell = (cell) => {
         if (!cell || !cell.inCurrentMonth) {
-            // Пустая ячейка (или день вне текущего месяца)
+            // Пустая ячейка (вне текущего месяца)
             return <td style={{ minWidth: '120px' }} />;
         }
+
         return (
-            <td
-                key={cell.date}
-                style={{ minWidth: '120px', verticalAlign: 'top' }}
-            >
+            <td key={cell.date} style={{ minWidth: '120px', verticalAlign: 'top' }}>
                 <div className="d-flex flex-column p-1" style={{ minHeight: '150px' }}>
-                    {/* Номер дня (с onclick для tooltip) */}
+                    {/* Номер дня, кликаем для открытия tooltip */}
                     <div
                         className="fw-bold mb-2"
                         style={{ cursor: 'pointer' }}
@@ -44,7 +43,7 @@ function CalendarTable({
                     {/* Список записей */}
                     <ul className="list-unstyled flex-grow-1">
                         {cell.records.map((record) => {
-                            // Смотрим, не изменён ли локально статус
+                            // Проверяем локальное изменение статуса
                             const localAttended = pendingAttendance.hasOwnProperty(record.id)
                                 ? pendingAttendance[record.id]
                                 : record.attended;
@@ -77,7 +76,7 @@ function CalendarTable({
                                                 </button>
                                             )}
 
-                                            {/* Кнопка удаления записи */}
+                                            {/* Кнопка удаления */}
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-outline-secondary"
@@ -111,9 +110,9 @@ function CalendarTable({
         );
     };
 
-    // Таблица для 4-колоночного режима (десктоп)
+    // 4-колоночная таблица (десктоп)
     const renderDesktopTable = () => (
-        <div className="table-responsive px-2 py-3">
+        <div className="table-responsive">
             <table className="table table-bordered align-middle text-center mb-3">
                 <thead className="table-secondary">
                 <tr>
@@ -124,19 +123,14 @@ function CalendarTable({
                 </thead>
                 <tbody>
                 {weeks.map((week, weekIndex) => {
-                    // Собираем dayMap: ключ = jsDay (0..6)
                     const dayMap = {};
                     week.forEach((cell) => {
                         const jsDay = new Date(cell.date).getDay();
                         dayMap[jsDay] = cell;
                     });
-
                     return (
                         <tr key={weekIndex}>
-                            {dayOrder.map((dow) => {
-                                const cell = dayMap[dow];
-                                return renderDayCell(cell);
-                            })}
+                            {dayOrder.map((dow) => renderDayCell(dayMap[dow]))}
                         </tr>
                     );
                 })}
@@ -145,9 +139,9 @@ function CalendarTable({
         </div>
     );
 
-    // Таблица для 2-колоночного режима (мобильная)
+    // 2-колоночная таблица (мобильная)
     const renderMobileTable = () => (
-        <div className="table-responsive px-2 py-3">
+        <div className="table-responsive">
             <table className="table table-bordered align-middle text-center mb-3">
                 <thead className="table-secondary">
                 <tr>
@@ -162,14 +156,10 @@ function CalendarTable({
                         const jsDay = new Date(cell.date).getDay();
                         dayMap[jsDay] = cell;
                     });
-
-                    // Каждую неделю разбиваем на 2 строки по 2 дня
+                    // Разбиваем каждую неделю на 2 строки (2 дня в строке)
                     return mobilePairs.map((pair, pairIndex) => (
-                        <tr key={weekIndex + '-' + pairIndex}>
-                            {pair.map((dow) => {
-                                const cell = dayMap[dow];
-                                return renderDayCell(cell);
-                            })}
+                        <tr key={`${weekIndex}-${pairIndex}`}>
+                            {pair.map((dow) => renderDayCell(dayMap[dow]))}
                         </tr>
                     ));
                 })}

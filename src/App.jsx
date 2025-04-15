@@ -3,7 +3,7 @@ import CalendarPage from './components/CalendarPage.jsx';
 
 function App() {
     return (
-        <div className="app-container">
+        <div>
             <CalendarPage />
         </div>
     );

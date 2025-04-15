@@ -3,35 +3,35 @@ import CalendarHeader from './CalendarHeader.jsx';
 import CalendarTable from './CalendarTable.jsx';
 import useIsMobile from '../hooks/useIsMobile';
 
-// ВНИМАНИЕ: если у вас есть какие-то особые константы или пропсы, правьте под себя.
 function CalendarPage() {
     const now = new Date();
     const [year, setYear] = useState(now.getFullYear());
     const [month, setMonth] = useState(now.getMonth() + 1);
 
     const [weeks, setWeeks] = useState([]);
-    const [allowedDays, setAllowedDays] = useState([]); // На всякий случай
+    const [allowedDays, setAllowedDays] = useState([]);
     const [monthNames, setMonthNames] = useState({});
     const [attendedCount, setAttendedCount] = useState(0);
     const [totalCost, setTotalCost] = useState(0);
 
-    // Состояния для всплывающего окна (tooltip) со сводкой по дню
+    // Tooltip (всплывающее окно) со сводкой по дню
     const [tooltipVisible, setTooltipVisible] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [dailySummary, setDailySummary] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
 
-    // Локальные изменения статусов (key = record.id, value = true/false)
+    // Локальные изменения статусов (key = record.id, value = bool)
     const [pendingAttendance, setPendingAttendance] = useState({});
 
     // Проверяем, мобильное ли устройство
     const isMobile = useIsMobile();
 
+    // При смене месяца/года загружаем новые данные
     useEffect(() => {
         fetchCalendarData();
     }, [month, year]);
 
-    // ----- Функции -----
+    // Загрузка данных календаря
     const fetchCalendarData = async () => {
         try {
             const response = await fetch(`/api/v1/calendar?year=${year}&month=${month}`);
@@ -48,7 +48,7 @@ function CalendarPage() {
         }
     };
 
-    // Открытие tooltip с информацией о дне
+    // Открываем tooltip со сводкой дня
     const openSummaryTooltip = async (event, date) => {
         event.stopPropagation();
         setSelectedDate(date);
@@ -68,11 +68,11 @@ function CalendarPage() {
             if (data && data.length > 0) {
                 setDailySummary(data[0]);
             } else {
-                setDailySummary({ attendedCount: 0, earnings: 0 });
+                setDailySummary({ totalCount: 0, attendedCount: 0, earnings: 0 });
             }
             setTooltipVisible(true);
         } catch (error) {
-            console.error('Ошибка при получении сводки для даты', date, error);
+            console.error('Ошибка при получении сводки дня:', error);
         }
     };
 
@@ -81,7 +81,7 @@ function CalendarPage() {
         setTooltipVisible(false);
     };
 
-    // Локально переключаем статус присутствия
+    // Локально переключаем статус "присутствовал/не присутствовал"
     const toggleAttendanceLocally = (record) => {
         const recordId = record.id;
         const currentAttended = pendingAttendance.hasOwnProperty(recordId)
@@ -94,7 +94,7 @@ function CalendarPage() {
         }));
     };
 
-    // Сохранить все локальные изменения
+    // Сохраняем все локально изменённые статусы на сервер
     const saveChanges = async () => {
         try {
             const recordIds = Object.keys(pendingAttendance);
@@ -106,13 +106,11 @@ function CalendarPage() {
                 formData.append('recordId', recordId);
 
                 if (shouldAttend) {
-                    // Ставим "присутствовал"
                     await fetch('/api/v1/calendar/check', {
                         method: 'POST',
                         body: formData,
                     });
                 } else {
-                    // Ставим "не присутствовал"
                     await fetch('/api/v1/calendar/uncheck', {
                         method: 'POST',
                         body: formData,
@@ -120,9 +118,8 @@ function CalendarPage() {
                 }
             }
 
-            // После сохранения очищаем локальные изменения
+            // Очищаем локальные изменения и перезапрашиваем данные
             setPendingAttendance({});
-            // И перезапрашиваем данные
             await fetchCalendarData();
         } catch (error) {
             console.error('Ошибка при сохранении изменений:', error);
@@ -138,7 +135,7 @@ function CalendarPage() {
             if (!response.ok) throw new Error('Ошибка при удалении записи');
             await fetchCalendarData();
         } catch (error) {
-            console.error('Ошибка:', error);
+            console.error('Ошибка при удалении записи:', error);
         }
     };
 
@@ -159,11 +156,10 @@ function CalendarPage() {
                 body: formData,
             });
             if (!response.ok) throw new Error('Ошибка при добавлении записи');
-
             form.reset();
             await fetchCalendarData();
         } catch (error) {
-            console.error('Ошибка:', error);
+            console.error('Ошибка при добавлении записи:', error);
         }
     };
 
@@ -181,17 +177,17 @@ function CalendarPage() {
         zIndex: 1000,
         minWidth: '180px',
         maxWidth: 'calc(100% - 20px)',
-        margin: '0 10px',
+        margin: '0 10px'
     };
 
-    // Фоновый слой для клика вне tooltip
+    // Фон для клика вне tooltip
     const backdropStyle = {
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 900,
+        zIndex: 900
     };
 
     return (
@@ -207,7 +203,6 @@ function CalendarPage() {
                 saveChanges={saveChanges}
             />
 
-            {/* Рендер таблицы: 4 колонки (десктоп) или 2 колонки (мобильное) */}
             <CalendarTable
                 weeks={weeks}
                 pendingAttendance={pendingAttendance}
@@ -218,10 +213,8 @@ function CalendarPage() {
                 mobileView={isMobile}
             />
 
-            {/* Фон для закрытия tooltip при клике снаружи */}
             {tooltipVisible && <div style={backdropStyle} onClick={closeTooltip} />}
 
-            {/* Сам tooltip со сводкой */}
             {tooltipVisible && (
                 <div style={tooltipStyle} onClick={(e) => e.stopPropagation()}>
                     <h5 style={{ marginBottom: '8px' }}>
