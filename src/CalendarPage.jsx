@@ -1,5 +1,3 @@
-// src/CalendarPage.jsx
-
 import React, { useEffect, useState } from 'react'
 import { Check, X, Trash2 } from 'lucide-react'
 
@@ -44,6 +42,11 @@ function CalendarPage() {
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
     const [dailySummary, setDailySummary] = useState(null)
     const [selectedDate, setSelectedDate] = useState('')
+
+    // ---------- ВАЖНО: локальные изменения статусов посещения ----------
+    // Ключ = record.id, значение = true (посетил) или false (не посетил).
+    // Если ключа нет, значит никаких локальных изменений по этому record нет.
+    const [pendingAttendance, setPendingAttendance] = useState({})
 
     // Определяем, нужно ли использовать мобильное представление
     const isMobile = useIsMobile()
@@ -97,33 +100,61 @@ function CalendarPage() {
         setTooltipVisible(false)
     }
 
-    // Отметить посещение
-    const setAttended = async (recordId) => {
-        try {
-            const formData = new FormData()
-            formData.append('recordId', recordId)
-            await fetch('/api/v1/calendar/check', {
-                method: 'POST',
-                body: formData,
-            })
-            await fetchCalendarData()
-        } catch (error) {
-            console.error('Ошибка:', error)
-        }
+    // ---------- РАНЬШЕ БЫЛИ setAttended / setNotAttended (убрали, делаем "отложенно") ----------
+
+    // Локально меняем статус присутствия (true/false) в pendingAttendance, без запроса к серверу
+    const toggleAttendanceLocally = (record) => {
+        const recordId = record.id
+        // Текущее локальное значение, если его нет, берём с сервера (record.attended)
+        const currentAttended = pendingAttendance.hasOwnProperty(recordId)
+            ? pendingAttendance[recordId]
+            : record.attended
+
+        // Переключаем
+        const newValue = !currentAttended
+
+        setPendingAttendance((prev) => ({
+            ...prev,
+            [recordId]: newValue,
+        }))
     }
 
-    // Снять посещение
-    const setNotAttended = async (recordId) => {
+    // Кнопка "Сохранить" — отправляет все локально накопленные изменения на сервер
+    const saveChanges = async () => {
         try {
-            const formData = new FormData()
-            formData.append('recordId', recordId)
-            await fetch('/api/v1/calendar/uncheck', {
-                method: 'POST',
-                body: formData,
-            })
+            const recordIds = Object.keys(pendingAttendance)
+            if (recordIds.length === 0) {
+                // Нет изменений — выходим
+                return
+            }
+            // Шлем все изменения (каждое в отдельном запросе или через bulk API, если есть)
+            for (const recordId of recordIds) {
+                const shouldAttend = pendingAttendance[recordId]
+                const formData = new FormData()
+                formData.append('recordId', recordId)
+
+                if (shouldAttend) {
+                    // Ставим "присутствовал"
+                    await fetch('/api/v1/calendar/check', {
+                        method: 'POST',
+                        body: formData,
+                    })
+                } else {
+                    // Ставим "не присутствовал"
+                    await fetch('/api/v1/calendar/uncheck', {
+                        method: 'POST',
+                        body: formData,
+                    })
+                }
+            }
+
+            // После сохранения — очищаем локальные изменения
+            setPendingAttendance({})
+
+            // И обновляем календарь
             await fetchCalendarData()
         } catch (error) {
-            console.error('Ошибка:', error)
+            console.error('Ошибка при сохранении изменений:', error)
         }
     }
 
@@ -196,44 +227,52 @@ function CalendarPage() {
 
                     {/* Список записей */}
                     <ul className="list-unstyled flex-grow-1">
-                        {cell.records.map((record) => (
-                            <li key={record.id} className="mb-2">
-                                <div className="d-flex align-items-center justify-content-between">
-                  <span className={record.attended ? 'fw-bold text-success' : ''}>
-                    {record.personName}
-                  </span>
-                                    <div className="d-flex gap-1">
-                                        {record.attended ? (
+                        {cell.records.map((record) => {
+                            // Смотрим, не изменён ли локально статус присутствия
+                            const localAttended = pendingAttendance.hasOwnProperty(record.id)
+                                ? pendingAttendance[record.id]
+                                : record.attended
+
+                            return (
+                                <li key={record.id} className="mb-2">
+                                    <div className="d-flex align-items-center justify-content-between">
+                      <span className={localAttended ? 'fw-bold text-success' : ''}>
+                        {record.personName}
+                      </span>
+                                        <div className="d-flex gap-1">
+                                            {/* Кнопка переключения статуса (теперь одна и та же функция) */}
+                                            {localAttended ? (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-success"
+                                                    onClick={() => toggleAttendanceLocally(record)}
+                                                    title="Отметить как не был"
+                                                >
+                                                    <Check size={16} />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-danger"
+                                                    onClick={() => toggleAttendanceLocally(record)}
+                                                    title="Отметить как был"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            )}
                                             <button
                                                 type="button"
-                                                className="btn btn-sm btn-outline-success"
-                                                onClick={() => setNotAttended(record.id)}
-                                                title="Отметить как не был"
+                                                className="btn btn-sm btn-outline-secondary"
+                                                onClick={() => deleteRecord(record.id)}
+                                                title="Удалить запись"
                                             >
-                                                <Check size={16} />
+                                                <Trash2 size={16} />
                                             </button>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-outline-danger"
-                                                onClick={() => setAttended(record.id)}
-                                                title="Отметить как был"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        )}
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => deleteRecord(record.id)}
-                                            title="Удалить запись"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </li>
-                        ))}
+                                </li>
+                            )
+                        })}
                     </ul>
 
                     {/* Форма добавления новой записи */}
@@ -322,19 +361,24 @@ function CalendarPage() {
                     </div>
                 </form>
 
-                {/* Суммарная информация */}
-                <div className="text-white-50 ms-sm-auto d-flex flex-column align-items-start align-items-sm-end">
-                    <div>
-                        Посещений: <strong className="text-white">{attendedCount}</strong>
+                {/* Блок с суммарной информацией + кнопка "Сохранить" */}
+                <div className="ms-sm-auto d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3">
+                    <div className="text-white-50 d-flex flex-column align-items-start align-items-sm-end">
+                        <div>
+                            Посещений: <strong className="text-white">{attendedCount}</strong>
+                        </div>
+                        <div>
+                            Сумма: <strong className="text-white">{totalCost}</strong> руб.
+                        </div>
                     </div>
-                    <div>
-                        Сумма: <strong className="text-white">{totalCost}</strong> руб.
-                    </div>
+
+                    <button type="button" className="btn btn-warning btn-sm" onClick={saveChanges}>
+                        Сохранить
+                    </button>
                 </div>
             </div>
         </nav>
     )
-
 
     // ======= Разметка для 4 колонок (десктоп) =======
     const DesktopTable = (
@@ -359,7 +403,6 @@ function CalendarPage() {
                         <tr key={weekIndex}>
                             {dayOrder.map((dow) => {
                                 const cell = dayMap[dow]
-                                // Функция выше (renderDayCell) формирует <td> с данными
                                 return renderDayCell(cell)
                             })}
                         </tr>
@@ -394,10 +437,9 @@ function CalendarPage() {
                         dayMap[jsDay] = cell
                     })
 
-                    // Каждая неделя будет занимать 2 строки (по 2 дня каждая)
+                    // Каждая "неделя" будет разбита ещё на 2 строки (по 2 дня в строке)
                     return mobilePairs.map((pair, pairIndex) => (
                         <tr key={weekIndex + '-' + pairIndex}>
-                            {/* pair — это массив из 2 dayOfWeek, например [2, 4] */}
                             {pair.map((dow) => {
                                 const cell = dayMap[dow]
                                 return renderDayCell(cell)
@@ -414,7 +456,7 @@ function CalendarPage() {
         <div className="calendar-page" onClick={closeTooltip}>
             {Header}
 
-            {/* Выводим либо 4-колоночную, либо 2-колоночную вёрстку */}
+            {/* Выводим либо 4-колоночную (десктоп), либо 2-колоночную (мобильную) вёрстку */}
             {isMobile ? MobileTable : DesktopTable}
 
             {/* Фоновый слой для закрытия tooltip при клике вне */}
