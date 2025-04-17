@@ -1,0 +1,61 @@
+// общее
+.calendar-table {
+  th,
+  td {
+    vertical-align: top;
+    padding: 0.5rem;
+    min-width: 9rem;
+  }
+
+  .day-cell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .day-number {
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  ul.records {
+    flex-grow: 1;
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0.25rem;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+      gap: 0.25rem;
+
+      .name--attended {
+        color: $brand-success;
+        font-weight: 600;
+      }
+    }
+  }
+
+  form.add-record {
+    display: flex;
+    gap: 0.25rem;
+
+    input {
+      flex: 1 1 auto;
+    }
+  }
+}
+
+// мобильная сетка
+@media (max-width: 576px) {
+  .calendar-table {
+    th,
+    td {
+      min-width: 7.5rem;
+      padding: 0.35rem;
+      font-size: 0.8rem;
+    }
+  }
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import CalendarHeader from './CalendarHeader.jsx';
 import CalendarTable from './CalendarTable.jsx';
 import useIsMobile from '../hooks/useIsMobile';
+import '../styles/calendar-page.scss';
 
 function CalendarPage() {
     const now = new Date();
@@ -14,16 +15,15 @@ function CalendarPage() {
     const [attendedCount, setAttendedCount] = useState(0);
     const [totalCost, setTotalCost] = useState(0);
 
-    // Tooltip для деталей дня
+    // Tooltip
     const [tooltipVisible, setTooltipVisible] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [dailySummary, setDailySummary] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
 
-    // Локальные изменения статусов записей
+    // Локальные изменения
     const [pendingAttendance, setPendingAttendance] = useState({});
 
-    // Определяем, мобильное ли устройство
     const isMobile = useIsMobile();
 
     useEffect(() => {
@@ -32,7 +32,9 @@ function CalendarPage() {
 
     const fetchCalendarData = async () => {
         try {
-            const response = await fetch(`/api/v1/calendar?year=${year}&month=${month}`);
+            const response = await fetch(
+                `/api/v1/calendar?year=${year}&month=${month}`
+            );
             if (!response.ok) throw new Error('Ошибка получения календаря');
             const data = await response.json();
             setWeeks(data.weeks);
@@ -40,22 +42,30 @@ function CalendarPage() {
             setMonthNames(data.monthNames);
             setAttendedCount(data.attendedCount);
             setTotalCost(data.totalCost);
-        } catch (error) {
-            console.error('fetchCalendarData:', error);
+        } catch (err) {
+            console.error('fetchCalendarData:', err);
         }
     };
 
-    const openSummaryTooltip = async (event, date) => {
-        event.stopPropagation();
+    const openSummaryTooltip = async (e, date) => {
+        e.stopPropagation();
         setSelectedDate(date);
-        const rect = event.currentTarget.getBoundingClientRect();
-        setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.top + rect.height + 5 });
+        const rect = e.currentTarget.getBoundingClientRect();
+        setTooltipPosition({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height + 8,
+        });
+
         try {
             const formatted = new Date(date).toISOString().split('T')[0];
-            const resp = await fetch(`/api/v1/calendar/daily-summary?start=${formatted}&end=${formatted}`);
+            const resp = await fetch(
+                `/api/v1/calendar/daily-summary?start=${formatted}&end=${formatted}`
+            );
             if (!resp.ok) throw new Error('Ошибка получения сводки');
             const [summary] = await resp.json();
-            setDailySummary(summary || { totalCount: 0, attendedCount: 0, earnings: 0 });
+            setDailySummary(
+                summary || { totalCount: 0, attendedCount: 0, earnings: 0 }
+            );
             setTooltipVisible(true);
         } catch (err) {
             console.error('openSummaryTooltip:', err);
@@ -66,7 +76,9 @@ function CalendarPage() {
 
     const toggleAttendanceLocally = (record) => {
         const { id, attended } = record;
-        const current = pendingAttendance.hasOwnProperty(id) ? pendingAttendance[id] : attended;
+        const current = pendingAttendance.hasOwnProperty(id)
+            ? pendingAttendance[id]
+            : attended;
         setPendingAttendance((prev) => ({ ...prev, [id]: !current }));
     };
 
@@ -74,26 +86,33 @@ function CalendarPage() {
         try {
             const changes = Object.keys(pendingAttendance);
             if (changes.length === 0) return;
+
             for (const recordId of changes) {
                 const shouldAttend = pendingAttendance[recordId];
                 const formData = new FormData();
                 formData.append('recordId', recordId);
-                if (shouldAttend) {
-                    await fetch('/api/v1/calendar/check', { method: 'POST', body: formData });
-                } else {
-                    await fetch('/api/v1/calendar/uncheck', { method: 'POST', body: formData });
-                }
+
+                await fetch(
+                    shouldAttend
+                        ? '/api/v1/calendar/check'
+                        : '/api/v1/calendar/uncheck',
+                    { method: 'POST', body: formData }
+                );
             }
+
             setPendingAttendance({});
             await fetchCalendarData();
-        } catch (error) {
-            console.error('saveChanges:', error);
+        } catch (err) {
+            console.error('saveChanges:', err);
         }
     };
 
     const deleteRecord = async (recordId) => {
         try {
-            const resp = await fetch(`/api/v1/calendar/delete?recordId=${recordId}`, { method: 'DELETE' });
+            const resp = await fetch(
+                `/api/v1/calendar/delete?recordId=${recordId}`,
+                { method: 'DELETE' }
+            );
             if (!resp.ok) throw new Error('Ошибка удаления');
             await fetchCalendarData();
         } catch (err) {
@@ -103,42 +122,40 @@ function CalendarPage() {
 
     const addAttendance = async (e, date) => {
         e.preventDefault();
-        const form = e.target;
-        const personName = form.personName.value.trim();
-        if (!personName) return;
+        const name = e.target.personName.value.trim();
+        if (!name) return;
+
+        const formData = new FormData();
+        formData.append('personName', name);
+        formData.append('date', date);
+
         try {
-            const formData = new FormData();
-            formData.append('personName', personName);
-            formData.append('date', date);
-            const resp = await fetch('/api/v1/calendar/add', { method: 'POST', body: formData });
+            const resp = await fetch('/api/v1/calendar/add', {
+                method: 'POST',
+                body: formData,
+            });
             if (!resp.ok) throw new Error('Ошибка добавления записи');
-            form.reset();
+            e.target.reset();
             await fetchCalendarData();
         } catch (err) {
             console.error('addAttendance:', err);
         }
     };
 
+    // стили тултипа
     const tooltipStyle = {
         position: 'fixed',
         top: tooltipPosition.y,
         left: tooltipPosition.x,
         transform: 'translate(-50%, 0)',
-        backgroundColor: '#fff',
+        background: '#fff',
         border: '1px solid #ddd',
-        borderRadius: '8px',
-        padding: '10px 15px',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-        zIndex: 1000,
-        minWidth: '180px',
-        maxWidth: 'calc(100% - 20px)',
-        margin: '0 10px'
-    };
-
-    const backdropStyle = {
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: 900
+        borderRadius: '0.75rem',
+        padding: '0.75rem 1rem',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        zIndex: 1050,
+        minWidth: 180,
+        maxWidth: 'calc(100% - 2rem)',
     };
 
     return (
@@ -164,32 +181,42 @@ function CalendarPage() {
                 mobileView={isMobile}
             />
 
-            {tooltipVisible && <div style={backdropStyle} onClick={closeTooltip} />}
-
             {tooltipVisible && (
-                <div style={tooltipStyle} onClick={(e) => e.stopPropagation()}>
-                    <h5 style={{ marginBottom: '8px' }}>
-                        Сводка за {new Date(selectedDate).toLocaleDateString()}
-                    </h5>
-                    {dailySummary ? (
-                        <>
-                            <p style={{ margin: '4px 0' }}>
-                                Записей: <strong>{dailySummary.totalCount || 0}</strong>
-                            </p>
-                            <p style={{ margin: '4px 0' }}>
-                                Пришли: <strong>{dailySummary.attendedCount || 0}</strong>
-                            </p>
-                            <p style={{ margin: '4px 0' }}>
-                                Заработано: <strong>{dailySummary.earnings || 0}</strong> руб.
-                            </p>
-                        </>
-                    ) : (
-                        <p>Нет данных</p>
-                    )}
-                    <button className="btn btn-secondary btn-sm mt-2" onClick={closeTooltip}>
-                        Закрыть
-                    </button>
-                </div>
+                <>
+                    <div
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            background: 'transparent',
+                            zIndex: 1040,
+                        }}
+                        onClick={closeTooltip}
+                    />
+                    <div style={tooltipStyle} onClick={(e) => e.stopPropagation()}>
+                        <h6 className="fw-bold mb-2">
+                            Сводка&nbsp;
+                            {new Date(selectedDate).toLocaleDateString('ru-RU')}
+                        </h6>
+                        <p className="mb-1">
+                            Записей:&nbsp;
+                            <strong>{dailySummary?.totalCount ?? 0}</strong>
+                        </p>
+                        <p className="mb-1">
+                            Пришли:&nbsp;
+                            <strong>{dailySummary?.attendedCount ?? 0}</strong>
+                        </p>
+                        <p className="mb-2">
+                            Заработано:&nbsp;
+                            <strong>{dailySummary?.earnings ?? 0}</strong>&nbsp;руб.
+                        </p>
+                        <button
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={closeTooltip}
+                        >
+                            Закрыть
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );

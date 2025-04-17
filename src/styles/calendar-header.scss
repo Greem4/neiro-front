@@ -1,0 +1,82 @@
+// src/styles/calendar-header.scss
+
+@use 'sass:color';
+@use './variables' as *;
+
+.calendar-header {
+  background: $header-gradient;
+  color: #fff;
+  box-shadow: $shadow-header;
+  padding: 1rem 0;
+
+  &__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0 0.75rem;
+  }
+
+  &__brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    white-space: nowrap;
+  }
+
+  &__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+
+    /* прячем подписи */
+    label {
+      display: none;
+    }
+
+    .form-select,
+    .form-control {
+      max-width: 120px;
+      font-size: 0.85rem;
+      padding: 0.25rem 0.5rem;
+    }
+  }
+
+  &__stats {
+    font-size: 0.875rem;
+
+    strong {
+      color: #fff;
+    }
+  }
+
+  .btn-save {
+    background: $brand-success;
+    border: none;
+    padding: 0.4rem 0.75rem;
+    line-height: 1;
+    transition: background-color $transition-base;
+
+    /* вот он, единственный hover-блок */
+    &:hover {
+      background: color.adjust($brand-success, $lightness: -6%);
+    }
+
+    svg {
+      margin-right: 0.4rem;
+    }
+  }
+}
+
+@media (max-width: 420px) {
+  .calendar-header__inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .calendar-header__stats {
+    margin-top: 0.25rem;
+  }
+}

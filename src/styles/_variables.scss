@@ -1,0 +1,19 @@
+// === Цветовая схема ===
+// (!) более мягкие, пастельные тона
+$brand-primary: #4f8ef7;      // было #0d6efd
+$brand-secondary: #7aa8ff;    // было #6610f2
+
+// для хедера сделаем отдельный градиент‑переменную
+$header-gradient: linear-gradient(135deg, $brand-primary 0%, $brand-secondary 100%);
+
+// неизменные
+$brand-success: #2ecc71;
+$brand-danger: #ff6b6b;
+$brand-gray-100: #f8f9fa;
+$brand-gray-900: #212529;
+
+$radius-lg: 1rem;
+$shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
+$shadow-header: 0 2px 6px rgba(0, 0, 0, 0.06);
+
+$transition-base: 0.25s ease-in-out;
