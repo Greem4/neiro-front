@@ -1,6 +1,15 @@
+/* -------------------------------------------------------------------------
+ * КОМПОНЕНТ:  CalendarPage
+ * ДОБАВЛЕНО:
+ *   • «Плавающая» панель SaveFooter — предлагает Сохранить / Отменить,
+ *     когда есть локальные изменения.
+ *   • Toast-уведомление после сохранения (показывает, сколько человек
+ *     сохранено и на какую сумму изменился заработок).
+ * ---------------------------------------------------------------------- */
 import React, { useEffect, useState } from 'react';
 import CalendarHeader from './CalendarHeader.jsx';
 import CalendarTable from './CalendarTable.jsx';
+import SaveFooter from './SaveFooter.jsx';
 import useIsMobile from '../hooks/useIsMobile';
 import '../styles/calendar-page.scss';
 
@@ -15,7 +24,7 @@ function CalendarPage() {
     const [attendedCount, setAttendedCount] = useState(0);
     const [totalCost, setTotalCost] = useState(0);
 
-    // Tooltip
+    // Tooltip (существующий функционал)
     const [tooltipVisible, setTooltipVisible] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [dailySummary, setDailySummary] = useState(null);
@@ -23,6 +32,9 @@ function CalendarPage() {
 
     // Локальные изменения
     const [pendingAttendance, setPendingAttendance] = useState({});
+
+    // Toast после сохранения
+    const [toast, setToast] = useState({ visible: false, message: '' });
 
     const isMobile = useIsMobile();
 
@@ -47,6 +59,7 @@ function CalendarPage() {
         }
     };
 
+    /* ---------- TOOLTIPS ---------- */
     const openSummaryTooltip = async (e, date) => {
         e.stopPropagation();
         setSelectedDate(date);
@@ -71,9 +84,9 @@ function CalendarPage() {
             console.error('openSummaryTooltip:', err);
         }
     };
-
     const closeTooltip = () => setTooltipVisible(false);
 
+    /* ---------- Локальное переключение отметок ---------- */
     const toggleAttendanceLocally = (record) => {
         const { id, attended } = record;
         const current = pendingAttendance.hasOwnProperty(id)
@@ -82,12 +95,18 @@ function CalendarPage() {
         setPendingAttendance((prev) => ({ ...prev, [id]: !current }));
     };
 
+    /* ---------- Сохранение локальных изменений ---------- */
     const saveChanges = async () => {
         try {
-            const changes = Object.keys(pendingAttendance);
-            if (changes.length === 0) return;
+            const changeIds = Object.keys(pendingAttendance);
+            if (changeIds.length === 0) return;
 
-            for (const recordId of changes) {
+            // запомним старые значения для расчёта дельты
+            const prevAttended = attendedCount;
+            const prevTotalCost = totalCost;
+
+            /* отправляем изменения на сервер */
+            for (const recordId of changeIds) {
                 const shouldAttend = pendingAttendance[recordId];
                 const formData = new FormData();
                 formData.append('recordId', recordId);
@@ -100,13 +119,41 @@ function CalendarPage() {
                 );
             }
 
-            setPendingAttendance({});
-            await fetchCalendarData();
+            setPendingAttendance({}); // очищаем локальный кэш
+
+            /* перезапрашиваем календарь и считаем дельту */
+            const response = await fetch(
+                `/api/v1/calendar?year=${year}&month=${month}`
+            );
+            if (!response.ok) throw new Error('Ошибка обновления данных');
+            const data = await response.json();
+
+            const deltaCount = data.attendedCount - prevAttended;
+            const deltaCost = data.totalCost - prevTotalCost;
+
+            /* обновляем состояние */
+            setWeeks(data.weeks);
+            setAllowedDays(data.allowedDays);
+            setMonthNames(data.monthNames);
+            setAttendedCount(data.attendedCount);
+            setTotalCost(data.totalCost);
+
+            /* показываем toast */
+            setToast({
+                visible: true,
+                message: `Сохранено: ${deltaCount} чел. / ${deltaCost} руб.`,
+            });
+            // скрыть через 4 сек
+            setTimeout(() => setToast({ visible: false, message: '' }), 4000);
         } catch (err) {
             console.error('saveChanges:', err);
         }
     };
 
+    /* ---------- Отмена локальных изменений ---------- */
+    const cancelChanges = () => setPendingAttendance({});
+
+    /* ---------- Добавление / удаление записей (без изменений) ---------- */
     const deleteRecord = async (recordId) => {
         try {
             const resp = await fetch(
@@ -142,7 +189,7 @@ function CalendarPage() {
         }
     };
 
-    // стили тултипа
+    /* ---------- стили для всплывающего tooltip-summary ---------- */
     const tooltipStyle = {
         position: 'fixed',
         top: tooltipPosition.y,
@@ -158,8 +205,10 @@ function CalendarPage() {
         maxWidth: 'calc(100% - 2rem)',
     };
 
+    /* ---------- JSX ---------- */
     return (
         <div className="calendar-page" onClick={closeTooltip}>
+            {/* ----------- HEADER ----------- */}
             <CalendarHeader
                 year={year}
                 setYear={setYear}
@@ -171,6 +220,7 @@ function CalendarPage() {
                 saveChanges={saveChanges}
             />
 
+            {/* ----------- CALENDAR ----------- */}
             <CalendarTable
                 weeks={weeks}
                 pendingAttendance={pendingAttendance}
@@ -181,6 +231,21 @@ function CalendarPage() {
                 mobileView={isMobile}
             />
 
+            {/* ----------- FLOATING SAVE/UNDO ----------- */}
+            {Object.keys(pendingAttendance).length > 0 && (
+                <SaveFooter
+                    pendingCount={Object.keys(pendingAttendance).length}
+                    onSave={saveChanges}
+                    onCancel={cancelChanges}
+                />
+            )}
+
+            {/* ----------- TOAST ----------- */}
+            {toast.visible && (
+                <div className="toast-info card-shadow">{toast.message}</div>
+            )}
+
+            {/* ----------- DAILY SUMMARY TOOLTIP ----------- */}
             {tooltipVisible && (
                 <>
                     <div
@@ -192,7 +257,10 @@ function CalendarPage() {
                         }}
                         onClick={closeTooltip}
                     />
-                    <div style={tooltipStyle} onClick={(e) => e.stopPropagation()}>
+                    <div
+                        style={tooltipStyle}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <h6 className="fw-bold mb-2">
                             Сводка&nbsp;
                             {new Date(selectedDate).toLocaleDateString('ru-RU')}
@@ -207,7 +275,8 @@ function CalendarPage() {
                         </p>
                         <p className="mb-2">
                             Заработано:&nbsp;
-                            <strong>{dailySummary?.earnings ?? 0}</strong>&nbsp;руб.
+                            <strong>{dailySummary?.earnings ?? 0}</strong>
+                            &nbsp;руб.
                         </p>
                         <button
                             className="btn btn-outline-secondary btn-sm"
