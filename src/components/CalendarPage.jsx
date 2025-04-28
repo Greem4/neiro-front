@@ -1,11 +1,3 @@
-/* -------------------------------------------------------------------------
- * КОМПОНЕНТ:  CalendarPage
- * ДОБАВЛЕНО:
- *   • «Плавающая» панель SaveFooter — предлагает Сохранить / Отменить,
- *     когда есть локальные изменения.
- *   • Toast-уведомление после сохранения (показывает, сколько человек
- *     сохранено и на какую сумму изменился заработок).
- * ---------------------------------------------------------------------- */
 import React, { useEffect, useState } from 'react';
 import CalendarHeader from './CalendarHeader.jsx';
 import CalendarTable from './CalendarTable.jsx';
@@ -22,18 +14,15 @@ function CalendarPage() {
     const [allowedDays, setAllowedDays] = useState([]);
     const [monthNames, setMonthNames] = useState({});
     const [attendedCount, setAttendedCount] = useState(0);
-    const [totalCost, setTotalCost] = useState(0);
+    const [totalCostWithoutTax, setTotalCostWithoutTax] = useState(0);
+    const [totalCostWithTax, setTotalCostWithTax] = useState(0);
 
-    // Tooltip (существующий функционал)
     const [tooltipVisible, setTooltipVisible] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [dailySummary, setDailySummary] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
 
-    // Локальные изменения
     const [pendingAttendance, setPendingAttendance] = useState({});
-
-    // Toast после сохранения
     const [toast, setToast] = useState({ visible: false, message: '' });
 
     const isMobile = useIsMobile();
@@ -44,22 +33,20 @@ function CalendarPage() {
 
     const fetchCalendarData = async () => {
         try {
-            const response = await fetch(
-                `/api/v1/calendar?year=${year}&month=${month}`
-            );
+            const response = await fetch(`/api/v1/calendar?year=${year}&month=${month}`);
             if (!response.ok) throw new Error('Ошибка получения календаря');
             const data = await response.json();
             setWeeks(data.weeks);
             setAllowedDays(data.allowedDays);
             setMonthNames(data.monthNames);
             setAttendedCount(data.attendedCount);
-            setTotalCost(data.totalCost);
+            setTotalCostWithoutTax(data.totalCostWithoutTax);
+            setTotalCostWithTax(data.totalCostWithTax);
         } catch (err) {
             console.error('fetchCalendarData:', err);
         }
     };
 
-    /* ---------- TOOLTIPS ---------- */
     const openSummaryTooltip = async (e, date) => {
         e.stopPropagation();
         setSelectedDate(date);
@@ -71,22 +58,18 @@ function CalendarPage() {
 
         try {
             const formatted = new Date(date).toISOString().split('T')[0];
-            const resp = await fetch(
-                `/api/v1/calendar/daily-summary?start=${formatted}&end=${formatted}`
-            );
+            const resp = await fetch(`/api/v1/calendar/daily-summary?start=${formatted}&end=${formatted}`);
             if (!resp.ok) throw new Error('Ошибка получения сводки');
             const [summary] = await resp.json();
-            setDailySummary(
-                summary || { totalCount: 0, attendedCount: 0, earnings: 0 }
-            );
+            setDailySummary(summary || { totalCount: 0, attendedCount: 0, earnings: 0 });
             setTooltipVisible(true);
         } catch (err) {
             console.error('openSummaryTooltip:', err);
         }
     };
+
     const closeTooltip = () => setTooltipVisible(false);
 
-    /* ---------- Локальное переключение отметок ---------- */
     const toggleAttendanceLocally = (record) => {
         const { id, attended } = record;
         const current = pendingAttendance.hasOwnProperty(id)
@@ -95,71 +78,56 @@ function CalendarPage() {
         setPendingAttendance((prev) => ({ ...prev, [id]: !current }));
     };
 
-    /* ---------- Сохранение локальных изменений ---------- */
     const saveChanges = async () => {
         try {
             const changeIds = Object.keys(pendingAttendance);
             if (changeIds.length === 0) return;
 
-            // запомним старые значения для расчёта дельты
             const prevAttended = attendedCount;
-            const prevTotalCost = totalCost;
+            const prevTotalCost = totalCostWithTax;
 
-            /* отправляем изменения на сервер */
             for (const recordId of changeIds) {
                 const shouldAttend = pendingAttendance[recordId];
-                const formData = new FormData();
-                formData.append('recordId', recordId);
-
-                await fetch(
-                    shouldAttend
-                        ? '/api/v1/calendar/check'
-                        : '/api/v1/calendar/uncheck',
-                    { method: 'POST', body: formData }
-                );
+                await fetch(`/api/v1/calendar/${recordId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ attended: shouldAttend }),
+                });
             }
 
-            setPendingAttendance({}); // очищаем локальный кэш
+            setPendingAttendance({});
 
-            /* перезапрашиваем календарь и считаем дельту */
-            const response = await fetch(
-                `/api/v1/calendar?year=${year}&month=${month}`
-            );
+            const response = await fetch(`/api/v1/calendar?year=${year}&month=${month}`);
             if (!response.ok) throw new Error('Ошибка обновления данных');
             const data = await response.json();
 
             const deltaCount = data.attendedCount - prevAttended;
-            const deltaCost = data.totalCost - prevTotalCost;
+            const deltaCost = data.totalCostWithTax - prevTotalCost;
 
-            /* обновляем состояние */
             setWeeks(data.weeks);
             setAllowedDays(data.allowedDays);
             setMonthNames(data.monthNames);
             setAttendedCount(data.attendedCount);
-            setTotalCost(data.totalCost);
+            setTotalCostWithoutTax(data.totalCostWithoutTax);
+            setTotalCostWithTax(data.totalCostWithTax);
 
-            /* показываем toast */
             setToast({
                 visible: true,
                 message: `Сохранено: ${deltaCount} чел. / ${deltaCost} руб.`,
             });
-            // скрыть через 4 сек
             setTimeout(() => setToast({ visible: false, message: '' }), 4000);
         } catch (err) {
             console.error('saveChanges:', err);
         }
     };
 
-    /* ---------- Отмена локальных изменений ---------- */
     const cancelChanges = () => setPendingAttendance({});
 
-    /* ---------- Добавление / удаление записей (без изменений) ---------- */
     const deleteRecord = async (recordId) => {
         try {
-            const resp = await fetch(
-                `/api/v1/calendar/delete?recordId=${recordId}`,
-                { method: 'DELETE' }
-            );
+            const resp = await fetch(`/api/v1/calendar/${recordId}`, {
+                method: 'DELETE'
+            });
             if (!resp.ok) throw new Error('Ошибка удаления');
             await fetchCalendarData();
         } catch (err) {
@@ -174,7 +142,7 @@ function CalendarPage() {
 
         const formData = new FormData();
         formData.append('personName', name);
-        formData.append('date', date);
+        formData.append('startDate', date);
 
         try {
             const resp = await fetch('/api/v1/calendar/add', {
@@ -189,7 +157,6 @@ function CalendarPage() {
         }
     };
 
-    /* ---------- стили для всплывающего tooltip-summary ---------- */
     const tooltipStyle = {
         position: 'fixed',
         top: tooltipPosition.y,
@@ -205,10 +172,8 @@ function CalendarPage() {
         maxWidth: 'calc(100% - 2rem)',
     };
 
-    /* ---------- JSX ---------- */
     return (
         <div className="calendar-page" onClick={closeTooltip}>
-            {/* ----------- HEADER ----------- */}
             <CalendarHeader
                 year={year}
                 setYear={setYear}
@@ -216,11 +181,11 @@ function CalendarPage() {
                 setMonth={setMonth}
                 monthNames={monthNames}
                 attendedCount={attendedCount}
-                totalCost={totalCost}
+                totalCostWithoutTax={totalCostWithoutTax}
+                totalCostWithTax={totalCostWithTax}
                 saveChanges={saveChanges}
             />
 
-            {/* ----------- CALENDAR ----------- */}
             <CalendarTable
                 weeks={weeks}
                 pendingAttendance={pendingAttendance}
@@ -231,7 +196,6 @@ function CalendarPage() {
                 mobileView={isMobile}
             />
 
-            {/* ----------- FLOATING SAVE/UNDO ----------- */}
             {Object.keys(pendingAttendance).length > 0 && (
                 <SaveFooter
                     pendingCount={Object.keys(pendingAttendance).length}
@@ -240,12 +204,10 @@ function CalendarPage() {
                 />
             )}
 
-            {/* ----------- TOAST ----------- */}
             {toast.visible && (
                 <div className="toast-info card-shadow">{toast.message}</div>
             )}
 
-            {/* ----------- DAILY SUMMARY TOOLTIP ----------- */}
             {tooltipVisible && (
                 <>
                     <div
