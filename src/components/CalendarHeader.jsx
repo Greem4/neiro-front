@@ -75,7 +75,7 @@ function CalendarHeader({
                         {/* Плитка 4 (выделенная) */}
                         <div className="stat-item stat-item--highlight">
                             <div className="stat-item__label">
-                                Возможный доход<br/>за оставшиеся
+                                Возможный доход<br/>за оставшиеся занятия
                             </div>
                             <div className="stat-item__value">
                                 {potentialProfit} ₽
