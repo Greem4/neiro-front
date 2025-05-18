@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import CalendarHeader from './CalendarHeader.jsx';
 import CalendarTable from './CalendarTable.jsx';
 import SaveFooter from './SaveFooter.jsx';
@@ -16,14 +16,15 @@ function CalendarPage() {
     const [attendedCount, setAttendedCount] = useState(0);
     const [totalCostWithoutTax, setTotalCostWithoutTax] = useState(0);
     const [totalCostWithTax, setTotalCostWithTax] = useState(0);
+    const [potentialProfit, setPotentialProfit] = useState(0);
 
     const [tooltipVisible, setTooltipVisible] = useState(false);
-    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [tooltipPosition, setTooltipPosition] = useState({x: 0, y: 0});
     const [dailySummary, setDailySummary] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
 
     const [pendingAttendance, setPendingAttendance] = useState({});
-    const [toast, setToast] = useState({ visible: false, message: '' });
+    const [toast, setToast] = useState({visible: false, message: ''});
 
     const isMobile = useIsMobile();
 
@@ -42,6 +43,7 @@ function CalendarPage() {
             setAttendedCount(data.attendedCount);
             setTotalCostWithoutTax(data.totalCostWithoutTax);
             setTotalCostWithTax(data.totalCostWithTax);
+            setPotentialProfit(data.potentialProfit);
         } catch (err) {
             console.error('fetchCalendarData:', err);
         }
@@ -61,7 +63,7 @@ function CalendarPage() {
             const resp = await fetch(`/api/v1/calendar/daily-summary?start=${formatted}&end=${formatted}`);
             if (!resp.ok) throw new Error('Ошибка получения сводки');
             const [summary] = await resp.json();
-            setDailySummary(summary || { totalCount: 0, attendedCount: 0, earnings: 0 });
+            setDailySummary(summary || {totalCount: 0, attendedCount: 0, earnings: 0});
             setTooltipVisible(true);
         } catch (err) {
             console.error('openSummaryTooltip:', err);
@@ -71,11 +73,11 @@ function CalendarPage() {
     const closeTooltip = () => setTooltipVisible(false);
 
     const toggleAttendanceLocally = (record) => {
-        const { id, attended } = record;
+        const {id, attended} = record;
         const current = pendingAttendance.hasOwnProperty(id)
             ? pendingAttendance[id]
             : attended;
-        setPendingAttendance((prev) => ({ ...prev, [id]: !current }));
+        setPendingAttendance((prev) => ({...prev, [id]: !current}));
     };
 
     const saveChanges = async () => {
@@ -90,8 +92,8 @@ function CalendarPage() {
                 const shouldAttend = pendingAttendance[recordId];
                 await fetch(`/api/v1/calendar/${recordId}`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ attended: shouldAttend }),
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({attended: shouldAttend}),
                 });
             }
 
@@ -115,7 +117,7 @@ function CalendarPage() {
                 visible: true,
                 message: `Сохранено: ${deltaCount} чел. / ${deltaCost} руб.`,
             });
-            setTimeout(() => setToast({ visible: false, message: '' }), 4000);
+            setTimeout(() => setToast({visible: false, message: ''}), 4000);
         } catch (err) {
             console.error('saveChanges:', err);
         }
@@ -183,6 +185,7 @@ function CalendarPage() {
                 attendedCount={attendedCount}
                 totalCostWithoutTax={totalCostWithoutTax}
                 totalCostWithTax={totalCostWithTax}
+                potentialProfit={potentialProfit}
                 saveChanges={saveChanges}
             />
 
