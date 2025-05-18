@@ -1,122 +1,127 @@
-/* -------------------------------------------------------------------------
- * ФАЙЛ СТИЛЕЙ ДЛЯ CalendarHeader
- * Отвечает за цветовую схему, паддинги и адаптивное поведение хедера.
- * ---------------------------------------------------------------------- */
 @use 'sass:color';
 @use './variables' as *;
 
-/* ---------- БАЗОВЫЙ ВИД (desktop ≥576 px) ---------- */
+/* --------------------------------------------
+   Основной контейнер хедера
+--------------------------------------------- */
 .calendar-header {
-  background: $header-gradient;
-  color: #fff;
-  box-shadow: $shadow-header;
-  padding: 1rem 0;
+  background: $header-gradient;       // фон хедера
+  color: #fff;                        // цвет текста
+  box-shadow: $shadow-header;         // тень
+  padding: 1rem 0;                    // вертикальные паддинги
 
   &__inner {
-    /* блок внутри хедера, кладём контент в столбик,
-       а ниже (в row) выровняем по строке               */
+    max-width: 1200px;                // макс. ширина
+    margin: 0 auto;                   // центрирование по горизонтали
+    padding: 0 1rem;                  // горизонтальные паддинги
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0 0.75rem;
+    gap: 1rem;                        // отступы между блоками
   }
 
   &__brand {
+    font-size: 1.5rem;
     font-weight: 700;
-    font-size: 1.25rem;
-    white-space: nowrap;
-  }
-
-  /* ---------- основная «линиЯ» ---------- */
-  &__row {
-    /* На десктопе — одна горизонтальная строка */
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    width: 100%;
   }
 
   &__form {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    /* подписи скрываем — минимализм */
-    label {
-      display: none;
-    }
+    gap: 0.5rem;                      // отступ между select и input
 
     .form-select,
     .form-control {
       max-width: 120px;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       padding: 0.25rem 0.5rem;
     }
   }
 
-  /* блок Save + статистика */
   &__actions {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  &__stats {
-    font-size: 0.875rem;
-
-    strong {
-      color: #fff;
-    }
-  }
-
-  /* стили зелёной кнопки Save */
-  .btn-save {
-    background: $brand-success;
-    border: none;
-    padding: 0.4rem 0.75rem;
-    line-height: 1;
-    transition: background-color $transition-base;
-
-    &:hover {
-      background: color.adjust($brand-success, $lightness: -6%);
-    }
-
-    svg {
-      margin-right: 0.4rem;
-    }
+    flex-direction: column;           // сначала плитки, затем кнопка
+    align-items: flex-end;            // прижать вправо
+    gap: 1.5rem;                      // отступ между сеткой и кнопкой
   }
 }
 
-/* ---------- МОБИЛЬНАЯ ВЕРСТКА (<576 px) ---------- */
+/* --------------------------------------------
+   Сетка стат-плиток 1×4 (всегда)
+--------------------------------------------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr)); // 4 колонки
+  gap: 1rem;                                          // отступы между плитками
+}
+
+/* --------------------------------------------
+   Стили каждой плитки
+--------------------------------------------- */
+.stat-item {
+  background: #fff;
+  border-radius: 0.6rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  text-align: center;
+
+  &__label {
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.2;
+  }
+
+  &__value {
+    margin-top: 0.25rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2a6f49;
+  }
+
+  &--highlight {
+    background: #e6f4ea;
+  }
+}
+
+/* --------------------------------------------
+   Кнопка «Сохранить»
+--------------------------------------------- */
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: $brand-success;
+  color: #fff;
+  padding: 0.6rem 1.25rem;
+  border: none;
+  border-radius: 0.4rem;
+  font-size: 0.95rem;
+  transition: background-color $transition-base;
+
+  &:hover {
+    background: color.adjust($brand-success, $lightness: -6%);
+  }
+}
+
+/* --------------------------------------------
+   Адаптив (<576px) — но кол-во колонок не меняется
+--------------------------------------------- */
 @media (max-width: 576px) {
   .calendar-header {
     &__inner {
-      /* бренд остаётся сверху, затем идёт row-flex с двумя колонками */
-      align-items: stretch;
-    }
-
-    &__row {
-      /* превращаем flex-строку в две колонки,
-         контент тянется по всей ширине */
-      flex-wrap: nowrap;
-      justify-content: space-between;
+      gap: 0.75rem;
     }
 
     &__actions {
-      /* Save + статистика складываем столбиком, как требовалось */
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0.5rem;
+      width: 100%;  // чтобы кнопка не вылезала
     }
+  }
 
-    /* чуть уменьшаем размеры форм-элементов */
-    .form-select,
-    .form-control {
-      max-width: 100px;
-      font-size: 0.8rem;
-    }
+  .stats-grid {
+    // оставляем две колонки и на мобильном
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+
+  .btn-save {
+    width: 100%;              // кнопка шириной 100%
+    justify-content: center;  // центрирование содержимого
   }
 }
