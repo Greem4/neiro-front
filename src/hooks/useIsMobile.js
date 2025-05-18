@@ -1,17 +1,13 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Возвращает true, если ширина экрана < 576px (Bootstrap breakpoint 'sm').
- */
+/** Возвращает true, если ширина экрана < 576px. */
 export default function useIsMobile() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 576);
 
     useEffect(() => {
-        function handleResize() {
-            setIsMobile(window.innerWidth < 576);
-        }
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        const onResize = () => setIsMobile(window.innerWidth < 576);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
     }, []);
 
     return isMobile;
