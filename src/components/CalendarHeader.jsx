@@ -68,7 +68,7 @@ function CalendarHeader({
                         </div>
                         {/* Плитка 3 */}
                         <div className="stat-item">
-                            <div className="stat-item__label">ЗП с налогом</div>
+                            <div className="stat-item__label">ЗП - налог</div>
                             <div className="stat-item__value">
                                 {totalCostWithTax} ₽
                             </div>
