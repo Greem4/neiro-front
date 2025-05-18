@@ -5,47 +5,47 @@
    Основной контейнер хедера
 --------------------------------------------- */
 .calendar-header {
-  background: $header-gradient;       // фон хедера
-  color: #fff;                        // цвет текста
-  box-shadow: $shadow-header;         // тень
-  padding: 1rem 0;                    // вертикальные паддинги
+  background: $header-gradient;       // фон хедера — ← НАСТРОЙ ЗДЕСЬ
+  color: #fff;                        // цвет текста — ← НАСТРОЙ ЗДЕСЬ
+  box-shadow: $shadow-header;         // тень — ← НАСТРОЙ ЗДЕСЬ
+  padding: 1rem 0;                    // вертикальные паддинги — ← НАСТРОЙ ЗДЕСЬ
 
   &__inner {
-    max-width: 1200px;                // макс. ширина
+    max-width: 1200px;                // макс. ширина контейнера — ← НАСТРОЙ ЗДЕСЬ
     margin: 0 auto;                   // центрирование по горизонтали
-    padding: 0 1rem;                  // горизонтальные паддинги
+    padding: 0 1rem;                  // горизонтальные паддинги — ← НАСТРОЙ ЗДЕСЬ
     display: flex;
     flex-direction: column;
-    align-items: center;              // центрируем всё содержимое
-    gap: 1rem;                        // отступы между блоками
+    align-items: center;              // выравнивание по центру
+    gap: 1rem;                        // отступы между блоками — ← НАСТРОЙ ЗДЕСЬ
   }
 
   &__brand {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.5rem;                // размер шрифта брендового текста — ← НАСТРОЙ ЗДЕСЬ
+    font-weight: 700;                 // жирность шрифта — ← НАСТРОЙ ЗДЕСЬ
     width: 100%;
-    text-align: center;               // бренд по центру
+    text-align: center;               // выравнивание по центру
   }
 
   &__form {
     display: flex;
-    justify-content: center;          // форма по центру
-    gap: 0.5rem;                      // отступ между select и input
+    justify-content: center;          // выравнивание формы по центру
+    gap: 0.5rem;                      // отступ между полями — ← НАСТРОЙ ЗДЕСЬ
 
     .form-select,
     .form-control {
-      max-width: 120px;
-      font-size: 0.9rem;
-      padding: 0.25rem 0.5rem;
+      max-width: 120px;               // ширина полей — ← НАСТРОЙ ЗДЕСЬ
+      font-size: 0.9rem;              // размер текста в полях — ← НАСТРОЙ ЗДЕСЬ
+      padding: 0.25rem 0.5rem;        // паддинги — ← НАСТРОЙ ЗДЕСЬ
     }
   }
 
   &__actions {
-    width: 100%;                      // растягиваем на всю ширину
+    width: 100%;
     display: flex;
     flex-direction: column;           // плитки сверху, кнопка снизу
-    align-items: center;              // выравнивание по центру
-    gap: 1.5rem;                      // отступ между сеткой и кнопкой
+    align-items: center;              // центрирование плиток и кнопки
+    gap: 1.5rem;                      // отступ между сеткой и кнопкой — ← НАСТРОЙ ЗДЕСЬ
   }
 }
 
@@ -55,37 +55,49 @@
 --------------------------------------------- */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr)); // 4 колонки
-  gap: 1rem;                                          // отступы между плитками
-  justify-content: center;                            // центрируем колонки
-  width: 100%;                                        // занимать всю ширину
+  grid-template-columns: repeat(4, minmax(140px, 1fr)); // число колонок на десктопе / min ширина — ← НАСТРОЙ ЗДЕСЬ
+  gap: 1rem;                                          // отступы между плитками — ← НАСТРОЙ ЗДЕСЬ
+  justify-content: center;                            // центрируем всю сетку
+  width: 100%;
+}
+
+/* --------------------------------------------
+   «Полная» плитка под всеми 4 колонками
+--------------------------------------------- */
+.stat-item--full {
+  grid-column: 1 / -1;                                 // растянуть по всем колонкам
+  background: #e6f4ea;                                 // фон —
+  color: #fff;                                         // цвет текста — ← НАСТРОЙ ЗДЕСЬ
+  padding: 0.75rem 1rem;                               // паддинги — ← НАСТРОЙ ЗДЕСЬ
+  border-radius: 0.6rem;                               // скругление углов — ← НАСТРОЙ ЗДЕСЬ
+  text-align: center;
 }
 
 /* --------------------------------------------
    Стили каждой плитки
 --------------------------------------------- */
 .stat-item {
-  background: #fff;
-  border-radius: 0.6rem;
-  padding: 0.75rem 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  background: #fff;                                     // фон плитки — ← НАСТРОЙ ЗДЕСЬ
+  border-radius: 0.6rem;                                // скругление углов — ← НАСТРОЙ ЗДЕСЬ
+  padding: 0.75rem 1rem;                                // паддинги — ← НАСТРОЙ ЗДЕСЬ
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);             // тень плитки — ← НАСТРОЙ ЗДЕСЬ
   text-align: center;
 
   &__label {
-    font-size: 0.85rem;
-    color: #555;
+    font-size: 0.85rem;                                 // размер метки — ← НАСТРОЙ ЗДЕСЬ
+    color: #555;                                        // цвет метки — ← НАСТРОЙ ЗДЕСЬ
     line-height: 1.2;
   }
 
   &__value {
-    margin-top: 0.25rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #2a6f49;
+    margin-top: 0.25rem;                                // отступ сверху — ← НАСТРОЙ ЗДЕСЬ
+    font-size: 1.25rem;                                 // размер значения — ← НАСТРОЙ ЗДЕСЬ
+    font-weight: 600;                                   // жирность значения — ← НАСТРОЙ ЗДЕСЬ
+    color: #2a6f49;                                     // цвет значения — ← НАСТРОЙ ЗДЕСЬ
   }
 
   &--highlight {
-    background: #e6f4ea;
+    background: #e6f4ea;                                // фон выделенной плитки — ← НАСТРОЙ ЗДЕСЬ
   }
 }
 
@@ -95,17 +107,17 @@
 .btn-save {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  background: $brand-success;
-  color: #fff;
-  padding: 0.6rem 1.25rem;
+  gap: 0.4rem;                                          // отступ иконки и текста — ← НАСТРОЙ ЗДЕСЬ
+  background: $brand-success;                           // фон кнопки — ← НАСТРОЙ ЗДЕСЬ
+  color: #fff;                                          // цвет текста кнопки — ← НАСТРОЙ ЗДЕСЬ
+  padding: 0.6rem 1.25rem;                              // паддинги — ← НАСТРОЙ ЗДЕСЬ
   border: none;
-  border-radius: 0.4rem;
-  font-size: 0.95rem;
+  border-radius: 0.4rem;                                // скругление углов — ← НАСТРОЙ ЗДЕСЬ
+  font-size: 0.95rem;                                   // размер текста — ← НАСТРОЙ ЗДЕСЬ
   transition: background-color $transition-base;
 
   &:hover {
-    background: color.adjust($brand-success, $lightness: -6%);
+    background: color.adjust($brand-success, $lightness: -6%); // цвет hover — ← НАСТРОЙ ЗДЕСЬ
   }
 }
 
@@ -114,11 +126,11 @@
 --------------------------------------------- */
 @media (max-width: 576px) {
   .stats-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr)); // 2 колонки
+    grid-template-columns: repeat(2, minmax(140px, 1fr)); // число колонок на мобиле — ← НАСТРОЙ ЗДЕСЬ
   }
 
   .btn-save {
-    width: 100%;                   // кнопка по ширине
-    justify-content: center;       // центрирование содержимого
+    width: 100%;                   // ширина кнопки — ← НАСТРОЙ ЗДЕСЬ
+    justify-content: center;       // выравнивание содержимого — ← НАСТРОЙ ЗДЕСЬ
   }
 }

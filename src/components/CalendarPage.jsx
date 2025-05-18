@@ -17,6 +17,7 @@ function CalendarPage() {
     const [totalCostWithoutTax, setTotalCostWithoutTax] = useState(0);
     const [totalCostWithTax, setTotalCostWithTax] = useState(0);
     const [potentialProfit, setPotentialProfit] = useState(0);
+    const [totalCost, setTotalCost] = useState(0);
 
     const [tooltipVisible, setTooltipVisible] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({x: 0, y: 0});
@@ -44,6 +45,7 @@ function CalendarPage() {
             setTotalCostWithoutTax(data.totalCostWithoutTax);
             setTotalCostWithTax(data.totalCostWithTax);
             setPotentialProfit(data.potentialProfit);
+            setTotalCost(data.totalCost);
         } catch (err) {
             console.error('fetchCalendarData:', err);
         }
@@ -186,6 +188,7 @@ function CalendarPage() {
                 totalCostWithoutTax={totalCostWithoutTax}
                 totalCostWithTax={totalCostWithTax}
                 potentialProfit={potentialProfit}
+                totalCost={totalCost}
                 saveChanges={saveChanges}
             />
 

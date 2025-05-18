@@ -1,5 +1,5 @@
 import React from 'react';
-import { Save } from 'lucide-react';
+import {Save} from 'lucide-react';
 import '../styles/calendar-header.scss';
 
 function CalendarHeader({
@@ -12,6 +12,7 @@ function CalendarHeader({
                             totalCostWithoutTax,
                             totalCostWithTax,
                             potentialProfit,
+                            totalCost,
                             saveChanges,
                         }) {
     const monthOptions = Object.entries(monthNames).map(([num, name]) => (
@@ -75,11 +76,15 @@ function CalendarHeader({
                         {/* Плитка 4 (выделенная) */}
                         <div className="stat-item stat-item--highlight">
                             <div className="stat-item__label">
-                                Возможный доход<br/>за оставшиеся занятия
+                                Будущие занятия
                             </div>
                             <div className="stat-item__value">
                                 {potentialProfit} ₽
                             </div>
+                        </div>
+                        <div className="stat-item stat-item--full">
+                            <div className="stat-item__label">Ожидаем в конце месяца :</div>
+                            <div className="stat-item__value">{totalCost} ₽</div>
                         </div>
                     </div>
 
@@ -90,7 +95,7 @@ function CalendarHeader({
                         onClick={saveChanges}
                         title="Сохранить изменения"
                     >
-                        <Save size={18} />
+                        <Save size={18}/>
                         <span>Сохранить</span>
                     </button>
                 </div>
