@@ -5,6 +5,7 @@
    Основной контейнер хедера
 --------------------------------------------- */
 .calendar-header {
+  position: relative;
   background: $header-gradient;       // фон хедера — ← НАСТРОЙ ЗДЕСЬ
   color: #fff;                        // цвет текста — ← НАСТРОЙ ЗДЕСЬ
   box-shadow: $shadow-header;         // тень — ← НАСТРОЙ ЗДЕСЬ
@@ -18,6 +19,53 @@
     flex-direction: column;
     align-items: center;              // выравнивание по центру
     gap: 1rem;                        // отступы между блоками — ← НАСТРОЙ ЗДЕСЬ
+  }
+
+  &__brand-area {
+    position: relative;         // чтобы внутри работало абсолютное позиционирование
+    display: flex;              // включаем флекс, чтобы flex-дети вели себя предсказуемо
+    align-items: center;        // выравниваем бренд и кнопку по центру по вертикали
+    justify-content: center;    // бренд по центру по горизонтали
+    width: 100%;
+    padding: 1rem;              // ZAЧЕМЫЕ вертикальные + горизонтальные паддинги (дают контейнеру высоту)
+    margin-bottom: 1rem;
+  }
+
+  &__brand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__logout {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    pointer-events: auto;
+    z-index: 20;
+    background: transparent;
+    border: none;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color $transition-base;
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    &:hover {
+      color: color.adjust(#fff, $lightness: -15%);
+    }
   }
 
   &__brand {
