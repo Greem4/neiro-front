@@ -1,43 +1,38 @@
-const API_URL = import.meta.env.VITE_API_URL ?? '';
-
+// обёртка над fetch, которая по-умолчанию подставляет JWT
 export async function api(
-    path,
-    { method = 'GET', body, auth = true, ...rest } = {},
+    url,
+    {
+        method = 'GET',
+        body   = null,
+        headers = {},
+        auth   = true,          // auth:false → запрос без Authorization
+    } = {},
 ) {
-    const headers = { ...(rest.headers || {}) };
+    const cfg = { method, headers: { ...headers } };
 
-    if (!(body instanceof FormData) && method !== 'GET') {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    /* ---------- JWT ---------- */
-    if (auth) {
-        const token = localStorage.getItem('token');
-        if (token) {
-            headers.Authorization = token.startsWith('Bearer ')
-                ? token                    // токен уже содержит префикс
-                : `Bearer ${token}`;       // добавляем префикс
+    /* ---------- тело запроса ---------- */
+    if (body !== null) {
+        if (body instanceof FormData) {
+            cfg.body = body;                    // let browser set boundaries
+        } else {
+            cfg.headers['Content-Type'] = 'application/json';
+            cfg.body = JSON.stringify(body);
         }
     }
 
-    const res = await fetch(`${API_URL}${path}`, {
-        method,
-        headers,
-        body:
-            body instanceof FormData
-                ? body
-                : body !== undefined
-                    ? JSON.stringify(body)
-                    : undefined,
-        ...rest,
-    });
-
-    if (res.status === 401) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
+    /* ---------- Authorization ---------- */
+    if (auth) {
+        const token = localStorage.getItem('token');
+        if (token) cfg.headers.Authorization = `Bearer ${token}`;
     }
 
-    if (!res.ok) throw new Error(await res.text());
-    return res.status === 204 ? null : res.json();
+    const resp = await fetch(url, cfg);
+
+    if (!resp.ok) {
+        const msg = await resp.text();
+        throw new Error(msg || resp.statusText);
+    }
+
+    const ct = resp.headers.get('Content-Type') || '';
+    return ct.includes('application/json') ? resp.json() : resp;
 }
