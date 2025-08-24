@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, Trash2 } from 'lucide-react';
+import { Check, X, Trash2, Calendar } from 'lucide-react';
 import '../styles/calendar-table.scss';
 
 // DOW: вторник, четверг, пятница, воскресенье
@@ -15,13 +15,31 @@ function CalendarTable({
                            pendingAttendance,
                            toggleAttendanceLocally,
                            deleteRecord,
-                           addAttendance,
+                           addSingle,      // (name, dateISO) => Promise - добавляет одну запись
+                           addMonthly,     // (name, startISO) => Promise - план на месяц
                            openSummaryTooltip,
                            mobileView,
                        }) {
     const renderDayCell = (cell) => {
         if (!cell || !cell.inCurrentMonth)
             return <td style={{ minWidth: '120px' }} />;
+
+        // локальные рефы через коллбеки
+        let inputRef = null;
+
+        const doSingle = async () => {
+            const name = (inputRef?.value || '').trim();
+            if (!name) return;
+            await addSingle(name, cell.date);
+            if (inputRef) inputRef.value = '';
+        };
+
+        const doMonthly = async () => {
+            const name = (inputRef?.value || '').trim();
+            if (!name) return;
+            await addMonthly(name, cell.date);
+            if (inputRef) inputRef.value = '';
+        };
 
         return (
             <td key={cell.date}>
@@ -30,6 +48,8 @@ function CalendarTable({
                     <div
                         className="day-number mb-1"
                         onClick={(e) => openSummaryTooltip(e, cell.date)}
+                        title="Сводка за день"
+                        style={{ cursor: 'pointer' }}
                     >
                         {new Date(cell.date).getDate()}
                     </div>
@@ -37,32 +57,22 @@ function CalendarTable({
                     {/* записи */}
                     <ul className="records">
                         {cell.records.map((record) => {
-                            const localAttended = pendingAttendance.hasOwnProperty(record.id)
+                            const localAttended = Object.prototype.hasOwnProperty.call(pendingAttendance, record.id)
                                 ? pendingAttendance[record.id]
                                 : record.attended;
 
                             return (
                                 <li key={record.id}>
-                  <span
-                      className={
-                          localAttended ? 'name--attended' : undefined
-                      }
-                  >
+                  <span className={localAttended ? 'name--attended' : undefined}>
                     {record.personName}
                   </span>
 
                                     <div className="btn-group btn-group-sm">
                                         <button
                                             type="button"
-                                            className={`btn btn-outline-${
-                                                localAttended ? 'success' : 'danger'
-                                            }`}
+                                            className={`btn btn-outline-${localAttended ? 'success' : 'danger'}`}
                                             onClick={() => toggleAttendanceLocally(record)}
-                                            title={
-                                                localAttended
-                                                    ? 'Отметить как не был'
-                                                    : 'Отметить как был'
-                                            }
+                                            title={localAttended ? 'Отметить как не был' : 'Отметить как был'}
                                         >
                                             {localAttended ? <Check size={16} /> : <X size={16} />}
                                         </button>
@@ -80,32 +90,66 @@ function CalendarTable({
                         })}
                     </ul>
 
-                    {/* форма добавления */}
-                    <form
-                        className="add-record mt-auto"
-                        onSubmit={(e) => addAttendance(e, cell.date)}
-                    >
+                    {/* форма добавления: поле + две кнопки: "+" (месяц) и "1" (одна запись) */}
+                    <div className="add-record mt-auto d-flex align-items-center gap-1">
                         <input
+                            ref={(el) => (inputRef = el)}
                             type="text"
                             name="personName"
                             className="form-control form-control-sm"
                             placeholder="Имя"
+                            autoComplete="off"
                             required
+                            onKeyDown={(ev) => {
+                                if (ev.key === 'Escape') ev.currentTarget.value = '';
+                                if (ev.key === 'Enter') {
+                                    // Enter по умолчанию пусть делает одиночную запись (самый частый быстрый кейс)
+                                    ev.preventDefault();
+                                    doMonthly();
+                                }
+                            }}
                         />
+                        {/* "+" — план на месяц */}
                         <button
-                            type="submit"
+                            type="button"
                             className="btn btn-outline-primary btn-sm"
-                            title="Добавить"
+                            title="Создать занятия на месяц (раз в неделю)"
+                            aria-label="Создать занятия на месяц"
+                            onClick={doMonthly}
                         >
                             +
                         </button>
-                    </form>
+                        {/* "1" — добавить одну запись */}
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm position-relative"
+                            title="Добавить одну запись на эту дату"
+                            aria-label="Добавить одну запись"
+                            onClick={doSingle}
+                            style={{ minWidth: 32 }}
+                        >
+                            <Calendar size={16} />
+                            <span
+                                className="dot-indicator"
+                                style={{
+                                    position: 'absolute',
+                                    top: 3,
+                                    right: 3,
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    background: 'red',
+                                }}
+                            />
+                        </button>
+
+                    </div>
                 </div>
             </td>
         );
     };
 
-    // 4‑колоночный десктоп
+    // 4-колоночный десктоп
     const renderDesktop = () => (
         <div className="table-responsive calendar-table my-3">
             <table className="table table-bordered align-middle text-center">
@@ -130,7 +174,7 @@ function CalendarTable({
         </div>
     );
 
-    // 2‑колоночный мобайл
+    // 2-колоночный мобайл
     const renderMobile = () => (
         <div className="table-responsive calendar-table my-3">
             <table className="table table-bordered align-middle text-center">

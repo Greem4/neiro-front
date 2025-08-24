@@ -1,4 +1,3 @@
-// src/components/CalendarPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { api }          from '@/api/client';
 import { useAuth }      from '@/auth/AuthContext.jsx';
@@ -11,16 +10,12 @@ import useIsMobile    from '../hooks/useIsMobile';
 import '../styles/calendar-page.scss';
 
 export default function CalendarPage() {
-    /* ————————————————————————————————————————
-     *   Хранилище токена / logout
-     * ———————————————————————————————————————— */
+    // аутентификация / logout
     const { logout } = useAuth();
     const navigate   = useNavigate();
     const onLogout   = () => { logout(); navigate('/login'); };
 
-    /* ————————————————————————————————————————
-     *        Стейт календаря / UI
-     * ———————————————————————————————————————— */
+    // стейт календаря
     const now   = new Date();
     const [year,  setYear ] = useState(now.getFullYear());
     const [month, setMonth] = useState(now.getMonth() + 1);
@@ -36,7 +31,7 @@ export default function CalendarPage() {
     const [pendingAttendance,   setPendingAttendance]   = useState({});
     const [toast,               setToast]               = useState({ visible:false, message:'' });
 
-    /* ——— для всплывающей «сводки» ——— */
+    // «сводка за день»
     const [tooltipVisible,  setTooltipVisible]  = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({x:0, y:0});
     const [dailySummary,    setDailySummary]    = useState(null);
@@ -44,9 +39,7 @@ export default function CalendarPage() {
 
     const isMobile = useIsMobile();
 
-    /* ──────────────────────────────────────────
-     *            Загрузка календаря
-     * ────────────────────────────────────────── */
+    // загрузка календаря
     const fetchCalendarData = useCallback(async () => {
         const data = await api(`/api/v1/calendar?year=${year}&month=${month}`);
         setWeeks               (data.weeks);
@@ -60,9 +53,7 @@ export default function CalendarPage() {
 
     useEffect(() => { fetchCalendarData(); }, [fetchCalendarData]);
 
-    /* ──────────────────────────────────────────
-     *       Всплывающая «Сводка за день»
-     * ────────────────────────────────────────── */
+    // всплывающая «Сводка за день»
     const openSummaryTooltip = async (e, date) => {
         e.stopPropagation();
         setSelectedDate(date);
@@ -71,29 +62,23 @@ export default function CalendarPage() {
         setTooltipPosition({ x: r.left + r.width/2, y: r.top + r.height + 8 });
 
         const iso = new Date(date).toISOString().split('T')[0];
-        const [summary] = await api(
-            `/api/v1/calendar/daily-summary?start=${iso}&end=${iso}`,
-        );
+        const [summary] = await api(`/api/v1/calendar/daily-summary?start=${iso}&end=${iso}`);
         setDailySummary(summary ?? { totalCount:0, attendedCount:0, earnings:0 });
         setTooltipVisible(true);
     };
     const closeTooltip = () => setTooltipVisible(false);
 
-    /* ──────────────────────────────────────────
-     *      Локально переключаем «был/не был»
-     * ────────────────────────────────────────── */
+    // локально переключаем «был/не был»
     const toggleAttendanceLocally = (record) => {
         setPendingAttendance(prev => ({
             ...prev,
-            [record.id]: !(prev.hasOwnProperty(record.id)
+            [record.id]: !(Object.prototype.hasOwnProperty.call(prev, record.id)
                 ? prev[record.id]
                 : record.attended),
         }));
     };
 
-    /* ──────────────────────────────────────────
-     *                PATCH / SAVE
-     * ────────────────────────────────────────── */
+    // PATCH / SAVE
     const saveChanges = async () => {
         const ids = Object.keys(pendingAttendance);
         if (!ids.length) return;
@@ -128,34 +113,33 @@ export default function CalendarPage() {
 
     const cancelChanges = () => setPendingAttendance({});
 
-    /* ──────────────────────────────────────────
-     *                 DELETE
-     * ────────────────────────────────────────── */
+    // DELETE
     const deleteRecord = async (id) => {
         await api(`/api/v1/calendar/${id}`, { method:'DELETE' });
         await fetchCalendarData();
     };
 
-    /* ──────────────────────────────────────────
-     *                 POST /add
-     * ────────────────────────────────────────── */
-    const addAttendance = async (e, date) => {
-        e.preventDefault();
-        const name = e.target.personName.value.trim();
-        if (!name) return;
+    // —— HANDLERS ДЛЯ ДВУХ КНОПОК В ЯЧЕЙКЕ ——
 
-        const fd = new FormData();
-        fd.append('personName', name);
-        fd.append('startDate',  date);
-
-        await api('/api/v1/calendar/add', { method:'POST', body:fd });
-        e.target.reset();
+    // "1": добавить одну запись (новый контроллер /records)
+    const addSingle = async (personName, dateISO) => {
+        await api('/api/v1/calendar/records', {
+            method: 'POST',
+            body:   { personName, visitDate: dateISO },
+        });
         await fetchCalendarData();
     };
 
-    /* ──────────────────────────────────────────
-     *                    UI
-     * ────────────────────────────────────────── */
+    // "+": создать занятия на месяц вперёд (старый контроллер /add)
+    const addMonthly = async (personName, startISO) => {
+        const fd = new FormData();
+        fd.append('personName', personName);
+        fd.append('startDate',  startISO);
+        await api('/api/v1/calendar/add', { method:'POST', body:fd });
+        await fetchCalendarData();
+    };
+
+    // UI
     const tooltipStyle = {
         position:'fixed', top:tooltipPosition.y, left:tooltipPosition.x,
         transform:'translate(-50%,0)',
@@ -184,7 +168,8 @@ export default function CalendarPage() {
                 pendingAttendance={pendingAttendance}
                 toggleAttendanceLocally={toggleAttendanceLocally}
                 deleteRecord={deleteRecord}
-                addAttendance={addAttendance}
+                addSingle={addSingle}        // ← кнопка "1"
+                addMonthly={addMonthly}      // ← кнопка "+"
                 openSummaryTooltip={openSummaryTooltip}
                 mobileView={isMobile}
             />
@@ -207,7 +192,7 @@ export default function CalendarPage() {
                         style={{ position:'fixed', inset:0, background:'transparent', zIndex:1040 }}
                         onClick={closeTooltip}
                     />
-                    <div style={tooltipStyle} onClick={e => e.stopPropagation()}>
+                    <div style={tooltipStyle} onClick={(e) => e.stopPropagation()}>
                         <h6 className="fw-bold mb-2">
                             Сводка&nbsp;{new Date(selectedDate).toLocaleDateString('ru-RU')}
                         </h6>
